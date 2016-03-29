@@ -257,7 +257,7 @@
 
     };
 
-    qoolbar._is_anybody_editing = false;
+    qoolbar._is_anybody_editing = false && false;
 
     qoolbar._end_all_editing = function() {
         if (qoolbar._is_anybody_editing) {
