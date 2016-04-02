@@ -3,7 +3,7 @@
 .qoolbar {
     display: block;
     position: fixed;
-    right: 0px;
+    right: 0;
     top: 100px;
     border-style: solid;
     border-width: 1px 0px 1px 1px;
@@ -25,7 +25,29 @@
     float: right;
     clear: both;
     text-align: center;
+    /*position: relative;*/
+    /*top: 0;*/
+    /*left: 0;*/
+    /*z-index: 3;   !* So dragged icon is in front of drop-target -- DOESNT WORK *!*/
 }
+
+/*.qool-verb img {*/
+    /*z-index: 5;*/
+    /*position: relative;*/
+/*}*/
+
+/*.qool-verb.ui-draggable-dragging,*/
+/*.qool-verb.ui-draggable-dragging img,*/
+/*.dragging,*/
+/*.dragging img {*/
+    /*position: relative;*/
+    /*top: 0;*/
+    /*left: 0;*/
+    /*z-index: 3;   !* So dragged icon is in front of drop-target -- DOESNT WORK *!*/
+    /*SEE:  http://stackoverflow.com/questions/5217311/setting-z-index-on-draggable-elements*/
+/*}*/
+
+
 
 /* Fade Until Hover */
 /* THANKS:  http://stackoverflow.com/a/5640854/673991 */
@@ -70,7 +92,8 @@
 
 .word {
     position: relative;   /* children  */
-    z-index: 1;
+    /*z-index: -1;   !* Desperate way to make draggable icon visible over top of word background white *!*/
+    /* But this -1 breaks tooltips and icon click-to-edit! */
 }
 .qool-icon-entry-container {
     position: relative;
@@ -82,5 +105,5 @@
     width: 2em;
     box-shadow: 3px -3px 3px #999;
     border: 1px solid #999;
-    z-index: 2;
+    /*z-index: 3;*/
 }

@@ -31,6 +31,7 @@
                     scroll: false,
                     start: function() {
                         qoolbar._associationInProgress();
+                        //$(ui.helper).addClass('dragging');
                     },
                     stop: function() {
                         qoolbar._associationResolved();
@@ -82,6 +83,7 @@
                      */
                     function(response) {
                         if (response.is_valid) {
+                            //console.info(response.icon_html);
                             if ($qool_icon.length > 0) {
                                 $qool_icon.replaceWith(response.icon_html)
                             } else {
