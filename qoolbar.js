@@ -5,6 +5,8 @@
 (function(qoolbar, $) {
     if (typeof $ != 'function') {
         console.error("The qoolbar.js module requires jQuery.")
+    } else if (typeof $.ui == 'undefined') {
+        console.error("The qoolbar.js module requires jQuery UI.")
     }
 
     qoolbar._ajax_url = null;
@@ -16,27 +18,33 @@
         qoolbar.post(
             'qoolbar_list',
             {},
-           /**
+            /**
              * @param response
-             * @param response.verbs --
+             * @param response.is_valid -- true or false
+             * @param response.verbs -- (if is_valid) -- qool verbs, see qoolbar._build()
+             * @param response.error_message -- (if not is_valid)
              */
             function(response) {
-                $(selector)
-                    .html(qoolbar._build(response.verbs));
-                //noinspection JSUnusedGlobalSymbols
-                $(selector + ' .qool-verb').draggable({
-                    helper: 'clone',
-                    cursor: '-moz-grabbing',
-                    // TODO:  grabby cursor?  -webkit-grab?  move?  http://stackoverflow.com/a/26811031/673991
-                    scroll: false,
-                    start: function() {
-                        qoolbar._associationInProgress();
-                        //$(ui.helper).addClass('dragging');
-                    },
-                    stop: function() {
-                        qoolbar._associationResolved();
-                    }
-                });
+                if (response.is_valid) {
+                    $(selector).html(qoolbar._build(response.verbs));
+                    //noinspection JSUnusedGlobalSymbols
+                    $(selector + ' .qool-verb').draggable({
+                        helper: 'clone',
+                        cursor: '-moz-grabbing',
+                        // TODO:  grabby cursor?  -webkit-grab?  move?  http://stackoverflow.com/a/26811031/673991
+                        scroll: false,
+                        start: function () {
+                            qoolbar._associationInProgress();
+                            //$(ui.helper).addClass('dragging');
+                        },
+                        stop: function () {
+                            qoolbar._associationResolved();
+                        }
+                    });
+                } else {
+                    console.error(response.error_message);
+                    alert(response.error_message);
+                }
             },
             function(error_message) {
                 console.error(error_message);
@@ -164,7 +172,8 @@
 
         // TODO:  Can we really rely on $(.word) to contain the $(.qool-icon)s?  Seriously not D.R.Y.
         // Because that containment is expressed in word-diagram-call.html --> icon_diagram --> playground_extras.py --> icon-diagram-call.html
-        // Is the solution to develop a RESTful API??
+        // Is the solution to develop a REST-full API??
+        //noinspection JSJQueryEfficiency
         $('.word').on('mousedown', '.qool-icon', function () {
             var was_already_editing = $(this).hasClass('qool-editing');
             $(this).data('was_already_editing', was_already_editing);
@@ -173,6 +182,7 @@
         // Blur, if it happens, will come between mousedown and click events.
         // THANKS:  http://stackoverflow.com/a/10653160/673991
 
+        //noinspection JSJQueryEfficiency
         $('.word').on('click', '.qool-icon', function (event) {
             var was_already_editing = $(this).data('was_already_editing');
             $(this).removeData('was_already_editing');
@@ -204,12 +214,14 @@
             event.stopPropagation();
         });
 
+        //noinspection JSJQueryEfficiency
         $('.word').on('click', '.qool-icon-entry', function (event) {
             // Clicking the input field itself should not cancel editing.
             // THANKS:  For nested click ignoring, http://stackoverflow.com/a/2364639/673991
             event.stopPropagation();
         });
 
+        //noinspection JSJQueryEfficiency
         $('body').on('keydown', '.qool-icon-entry', 'return', function(event) {
             event.preventDefault();
             var new_num = $(this).val();
@@ -278,6 +290,6 @@
         }
     };
 
-}(window.qoolbar = window.qoolbar || {}, jQuery));
+}(window.qoolbar = window.qoolbar || {}, window.jQuery));
 // THANKS:  http://www.adequatelygood.com/JavaScript-Module-Pattern-In-Depth.html
 // THANKS:  http://appendto.com/2010/10/how-good-c-habits-can-encourage-bad-javascript-habits-part-1/
