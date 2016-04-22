@@ -118,6 +118,7 @@
         variables.csrfmiddlewaretoken = $.cookie('csrftoken');
         $.post(qoolbar._ajax_url, variables).done(function(response_body) {
             var response_object = jQuery.parseJSON(response_body);
+            response_object.original_json = response_body;
             callback_done(response_object);
         }).fail(function(jqXHR) {
             fail_function(jqXHR.responseText);
