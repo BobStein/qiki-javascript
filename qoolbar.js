@@ -14,7 +14,7 @@
         qoolbar._ajax_url = url;
     };
 
-    qoolbar.html = function(selector) {
+    qoolbar.html = function(selector, built_callback) {
         qoolbar.post(
             'qoolbar_list',
             {},
@@ -41,6 +41,9 @@
                             qoolbar._associationResolved();
                         }
                     });
+                    if (typeof(built_callback) == 'function') {
+                        built_callback();
+                    }
                 } else {
                     console.error(response.error_message);
                     alert(response.error_message);
@@ -87,17 +90,27 @@
                      * @param response
                      * @param response.is_valid -- all good?
                      * @param response.icon_html -- (if valid) replacement icon diagram html
+                     * @param response.jbo -- (if valid) replacement json for word data-jbo.
                      * @param response.error_message (if not valid)
                      */
                     function(response) {
                         if (response.is_valid) {
-                            //console.info(response.icon_html);
-                            if ($qool_icon.length > 0) {
-                                $qool_icon.replaceWith(response.icon_html)
+                            if (response.hasOwnProperty('icon_html')) {
+                                //console.info(response.icon_html);
+                                if ($qool_icon.length > 0) {
+                                    $qool_icon.replaceWith(response.icon_html)
+                                } else {
+                                    $destination.find('.qool-bling').append(response.icon_html)
+                                }
+                            } else if (response.hasOwnProperty('jbo')) {
+                                var new_jbos = $.parseJSON(response.jbo);
+                                var new_jbo = new_jbos[0];
+                                $destination.data('jbo').push(new_jbo);
+                                console.info($destination.data('jbo'));
+                                qoolbar.bling($destination);
                             } else {
-                                $destination.find('.qool-badges').append(response.icon_html)
+                                window.location.reload(true);
                             }
-                            //window.location.reload(true);
                         } else {
                             alert(response.error_message);
                         }
@@ -117,7 +130,7 @@
         variables.action = action;
         variables.csrfmiddlewaretoken = $.cookie('csrftoken');
         $.post(qoolbar._ajax_url, variables).done(function(response_body) {
-            var response_object = jQuery.parseJSON(response_body);
+            var response_object = $.parseJSON(response_body);
             response_object.original_json = response_body;
             callback_done(response_object);
         }).fail(function(jqXHR) {
@@ -142,15 +155,17 @@
     // Why does verbs.name work and not verbs[].name?
     // SEE:  http://usejsdoc.org/tags-param.html#parameters-with-properties
     qoolbar._build = function(verbs) {
-        var return_value = $("<div/>");
+        qoolbar._verb_dicts = {};
+        var return_value = $("<div>");
         var num_verbs = verbs.length;
         for (var i_verb=0 ; i_verb < num_verbs ; i_verb++) {
             // THANKS:  (avoiding for-in loop on arrays) http://stackoverflow.com/a/3010848/673991
             var verb = verbs[i_verb];
-            var img_html = $('<img/>')
+            qoolbar._verb_dicts[verb.idn] = verb;
+            var img_html = $('<img>')
                 .attr('src', verb.icon_url)
                 .attr('title', verb.name);
-            var verb_html = $('<span/>')
+            var verb_html = $('<span>')
                 .html(img_html)
                 .addClass('qool-verb qool-verb-' + verb.name)
                 .attr('data-verb', verb.name)
@@ -159,6 +174,97 @@
         }
         return_value.addClass('qoolbar fade_until_hover');
         return return_value;
+    };
+
+    qoolbar.i_am = function(me_idn) {
+        qoolbar._me_idn = me_idn;
+    };
+
+    /**
+     * Decorate words with icons.
+     * @param selector
+     */
+    qoolbar.bling = function(selector) {
+        $(selector).each(function() {
+            var jbo = $(this).data('jbo');
+            var scores = qoolbar._scorer(jbo);
+            var icons = [];
+            for (var vrb in scores) {
+                if (scores.hasOwnProperty(vrb)) {
+                    var score = scores[vrb];
+                    var verb_dict = qoolbar._verb_dicts[vrb];
+                    var img_html = $('<img>')
+                        .attr('src', verb_dict.icon_url)
+                        .attr('title', verb_dict.name + ": " + score.history.join("-"));
+                    var my_score_html = $('<span>')
+                        .addClass('icon-sup')
+                        .text(score.my.toString());
+                    var everybody_score_html = $('<span>')
+                        .addClass('icon-sub')
+                        .text(score.sum.toString());
+                    var icon_bling_html = $('<span>')
+                        .addClass('icon-bling')
+                        .append(my_score_html)
+                        .append(everybody_score_html);
+                    var icon = $('<span>')
+                        .addClass('qool-icon')
+                        .append(img_html)
+                        .append(icon_bling_html);
+                    icons.push(icon);
+                }
+            }
+
+            //for (var idn in jbo) {
+            //    var word = jbo[idn];
+            //    var verb_idn = word.vrb;
+            //    var verb_dict = qoolbar._verb_dicts[verb_idn]
+            //    var img_html = $('<img>')
+            //        .attr('src', verb_dict.icon_url)
+            //        .attr('title', verb_dict.name);
+            //    var icon = $('<span>')
+            //        .html(img_html)
+            //        .addClass('qool-icon');
+            //    icons.push(icon);
+            //}
+
+            var bling = $('<span>')
+                .addClass('qool-bling');
+            bling.append(icons);
+            $(this).children('.qool-bling').remove();
+            $(this).append(bling)
+        });
+    };
+
+    qoolbar._scorer = function(jbo) {
+        var scores = {};
+        var jbo_dict = {};
+        $.each(jbo, function(_, word) {
+        //for (var i in jbo) {
+        //    var word = jbo[i];
+            if (!(word.vrb in scores)) {
+                scores[word.vrb] = {'sum': 0, 'my': null, 'history': []};
+            }
+            if (!(word.vrb in jbo_dict)) {
+                jbo_dict[word.vrb] = {}
+            }
+            jbo_dict[word.vrb][word.sbj] = {'num': word.num};
+            scores[word.vrb].history.push(word.num)
+        });
+        for (var vrb in jbo_dict) {
+            // Icons will appear in chronological order, if browser cooperates.
+            if (jbo_dict.hasOwnProperty(vrb)) {
+                for (var sbj in jbo_dict[vrb]) {
+                    if (jbo_dict[vrb].hasOwnProperty(sbj)) {
+                        var author_entry = jbo_dict[vrb][sbj];
+                        if (qoolbar._me_idn == sbj) {
+                            scores[vrb].my = author_entry.num;
+                        }
+                        scores[vrb].sum += author_entry.num;
+                    }
+                }
+            }
+        }
+        return scores;
     };
 
     qoolbar._associationInProgress = function() {   // indicating either (1) nouns are selected, or (2) a verb is dragging
@@ -268,9 +374,8 @@
         });
     };
 
-    qoolbar._qool_icon_entry_keypress = function() {
-
-    };
+    //qoolbar._qool_icon_entry_keypress = function() {
+    //};
 
     qoolbar._is_anybody_editing = false;
 
