@@ -209,7 +209,7 @@
                         .append(everybody_score_html);
                     var icon = $('<span>')
                         .addClass('qool-icon')
-                        .data('num', score.my)
+                        .data('num', score.my)   // Never shows up as data-num attribute, unfortunately.
                         .append(img_html)
                         .append(icon_bling_html);
                     icons.push(icon);
