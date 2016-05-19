@@ -181,13 +181,14 @@
     };
 
     /**
-     * Decorate words with icons.
+     * Decorate words with the qoolbar icons that have been applied to them,
+     * based on their data-jbo.
      * @param selector
      */
     qoolbar.bling = function(selector) {
         $(selector).each(function() {
             var jbo = $(this).data('jbo');
-            var scores = qoolbar._scorer(jbo);
+            var scores = _scorer(jbo);
             var icons = [];
             for (var vrb in scores) {
                 if (scores.hasOwnProperty(vrb)) {
@@ -208,6 +209,7 @@
                         .append(everybody_score_html);
                     var icon = $('<span>')
                         .addClass('qool-icon')
+                        .data('num', score.my)
                         .append(img_html)
                         .append(icon_bling_html);
                     icons.push(icon);
@@ -235,7 +237,7 @@
         });
     };
 
-    qoolbar._scorer = function(jbo) {
+    function _scorer(jbo) {
         var scores = {};
         var jbo_dict = {};
         $.each(jbo, function(_, word) {
@@ -266,6 +268,7 @@
         }
         return scores;
     };
+    // TODO:  Convert other private functions to closures.
 
     qoolbar._associationInProgress = function() {   // indicating either (1) nouns are selected, or (2) a verb is dragging
         $(document.body).css('background-color', 'rgb(200,200,200)');
@@ -280,6 +283,7 @@
         // TODO:  Can we really rely on $(.word) to contain the $(.qool-icon)s?  Seriously not D.R.Y.
         // Because that containment is expressed in word-diagram-call.html --> icon_diagram --> playground_extras.py --> icon-diagram-call.html
         // Is the solution to develop a REST-full API??
+
         //noinspection JSJQueryEfficiency
         $('.word').on('mousedown', '.qool-icon', function () {
             var was_already_editing = $(this).hasClass('qool-editing');
