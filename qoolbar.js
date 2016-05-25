@@ -41,7 +41,7 @@
                             qoolbar._associationResolved();
                         }
                     });
-                    if (typeof(built_callback) == 'function') {
+                    if (typeof built_callback == 'function') {
                         built_callback();
                     }
                 } else {
@@ -77,7 +77,6 @@
                 var verb_name = $source.data('verb');
                 var vrb_idn = $source.data('vrb-idn');
                 var destination_idn = $destination.data('idn');
-                var $qool_icon = $destination.find('.qool-icon').filter('[data-vrb-idn="' + vrb_idn + '"]');
                 qoolbar.post(
                     'sentence',
                     {
@@ -95,22 +94,7 @@
                      */
                     function(response) {
                         if (response.is_valid) {
-                            if (response.hasOwnProperty('icon_html')) {
-                                //console.info(response.icon_html);
-                                if ($qool_icon.length > 0) {
-                                    $qool_icon.replaceWith(response.icon_html)
-                                } else {
-                                    $destination.find('.qool-bling').append(response.icon_html)
-                                }
-                            } else if (response.hasOwnProperty('jbo')) {
-                                var new_jbos = $.parseJSON(response.jbo);
-                                var new_jbo = new_jbos[0];
-                                $destination.data('jbo').push(new_jbo);
-                                console.info($destination.data('jbo'));
-                                qoolbar.bling($destination);
-                            } else {
-                                window.location.reload(true);
-                            }
+                            _valid_sentence_response(response, vrb_idn, $destination);
                         } else {
                             alert(response.error_message);
                         }
@@ -119,6 +103,26 @@
             }
         });
     };
+
+    function _valid_sentence_response(response, vrb_idn, $destination) {
+        var $qool_icon = $destination.find('.qool-icon').filter('[data-vrb-idn="' + vrb_idn + '"]');
+        if (response.hasOwnProperty('icon_html')) {
+            //console.info(response.icon_html);
+            if ($qool_icon.length > 0) {
+                $qool_icon.replaceWith(response.icon_html)
+            } else {
+                $destination.find('.qool-bling').append(response.icon_html)
+            }
+        } else if (response.hasOwnProperty('jbo')) {
+            var new_jbos = $.parseJSON(response.jbo);
+            var new_jbo = new_jbos[0];
+            $destination.data('jbo').push(new_jbo);
+            //console.info($destination.data('jbo'));
+            qoolbar.bling($destination);
+        } else {
+            window.location.reload(true);
+        }
+    }
 
     qoolbar.post = function(action, variables, callback_done, callback_fail) {
         var fail_function;
@@ -210,6 +214,7 @@
                     var icon = $('<span>')
                         .addClass('qool-icon')
                         .data('num', score.my)   // Never shows up as data-num attribute, unfortunately.
+                        .data('vrb-idn', vrb)
                         .append(img_html)
                         .append(icon_bling_html);
                     icons.push(icon);
@@ -237,6 +242,17 @@
         });
     };
 
+    /**
+     * Tally scores for a word, from its qoolifying words.
+     * @param jbo -- array of qoolifying words (properties idn, sbj, vrb, txt, num)
+     * @returns {{}} -- associative object whose properties are verb qstrings (e.g. '0q82_25')
+     *      and whose values are objects with these properties associated with that verb:
+     *          sum -- sum of each user's latest num
+     *          my -- latest num from the current user, identified by qoolbar.i_am()
+     *          history -- array of nums in qoolifying words (ignoring user)
+     *              TODO:  Associate nums with each user.  Requires authentication.
+     * @private
+     */
     function _scorer(jbo) {
         var scores = {};
         var jbo_dict = {};
@@ -267,7 +283,7 @@
             }
         }
         return scores;
-    };
+    }
     // TODO:  Convert other private functions to closures.
 
     qoolbar._associationInProgress = function() {   // indicating either (1) nouns are selected, or (2) a verb is dragging
@@ -341,8 +357,13 @@
                 return
             }
             var $qool_icon = $(this).closest('.qool-icon');
-            var vrb_idn = $(this).closest('.qool-icon').data('vrb-idn');
-            var obj_idn = $(this).closest('.word').data('idn');
+            var vrb_idn = $qool_icon.data('vrb-idn');
+            if (typeof vrb_idn != 'string') {
+                console.error("qool-icon element needs a data-vrb-idn attribute");
+            }
+            var $destination = $(this).closest('.word');
+            var obj_idn = $destination.data('idn');
+            console.debug("obj_idn type " + typeof obj_idn);
             // TODO:  Search instead for a class that qoolbar.target() installed?  Better D.R.Y.
             qoolbar.post(
                 'sentence',
@@ -354,8 +375,10 @@
                 },
                 function(response) {
                     if (response.is_valid) {
+                        _valid_sentence_response(response, vrb_idn, $destination);
                         // console.info("Just in: " + response.icon_html);
                         qoolbar._end_all_editing();
+                        console.debug("HACK " + response.jbo);
                         $qool_icon.replaceWith(response.icon_html);
                     } else {
                         console.warn("Error editing num: " + response.error_message);
