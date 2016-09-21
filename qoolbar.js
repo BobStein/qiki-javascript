@@ -160,7 +160,7 @@
     // SEE:  http://usejsdoc.org/tags-param.html#parameters-with-properties
     qoolbar._build = function(verbs) {
         qoolbar._verb_dicts = {};
-        var return_value = $("<div>");
+        var return_value = $('<div>');
         var num_verbs = verbs.length;
         for (var i_verb=0 ; i_verb < num_verbs ; i_verb++) {
             // THANKS:  (avoiding for-in loop on arrays) http://stackoverflow.com/a/3010848/673991
@@ -203,7 +203,7 @@
                         .attr('title', verb_dict.name + ": " + score.history.join("-"));
                     var my_score_html = $('<span>')
                         .addClass('icon-sup')
-                        .text(score.my.toString());
+                        .text(_str(score.my));
                     var everybody_score_html = $('<span>')
                         .addClass('icon-sub')
                         .text(score.sum.toString());
@@ -241,6 +241,14 @@
             $(this).append(bling)
         });
     };
+
+    function _str(x) {
+        if (x == null) {
+            return ''
+        } else {
+            return x.toString()
+        }
+    }
 
     /**
      * Tally scores for a word, from its qoolifying words.
@@ -322,6 +330,8 @@
                 var old_num = $(this).data('num');
                 var $input = $('<input>', {
                     type: 'text',
+                    // TODO:  IE7 needs type in definition
+                    // SEE:  http://stackoverflow.com/questions/9898442/jquery-create-element-with-attribute-differences
                     class: 'qool-icon-entry',
                     value: old_num
                 });
