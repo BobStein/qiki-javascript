@@ -3,9 +3,9 @@
 
 
 (function(qoolbar, $) {
-    if (typeof $ != 'function') {
+    if (typeof $ !== 'function') {
         console.error("The qoolbar.js module requires jQuery.")
-    } else if (typeof $.ui == 'undefined') {
+    } else if (typeof $.ui === 'undefined') {
         console.error("The qoolbar.js module requires jQuery UI.")
     }
 
@@ -41,7 +41,7 @@
                             qoolbar._associationResolved();
                         }
                     });
-                    if (typeof built_callback == 'function') {
+                    if (typeof built_callback === 'function') {
                         built_callback();
                     }
                 } else {
@@ -198,15 +198,17 @@
                 if (scores.hasOwnProperty(vrb)) {
                     var score = scores[vrb];
                     var verb_dict = qoolbar._verb_dicts[vrb];
-                    var img_html = $('<img>')
-                        .attr('src', verb_dict.icon_url)
-                        .attr('title', verb_dict.name + ": " + score.history.join("-"));
+                    // noinspection RequiredAttributes
+                    var img_html = $('<img>', {
+                        src: verb_dict.icon_url,
+                        title: verb_dict.name + ": " + score.history.join("-")
+                    });
                     var my_score_html = $('<span>')
                         .addClass('icon-sup')
                         .text(_str(score.my));
-                    var everybody_score_html = $('<span>')
-                        .addClass('icon-sub')
-                        .text(score.sum.toString());
+                    var everybody_score_html = $('<span>', {
+                        class: 'icon-sub'
+                    }).text(score.sum.toString());
                     var icon_bling_html = $('<span>')
                         .addClass('icon-bling')
                         .append(my_score_html)
