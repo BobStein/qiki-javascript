@@ -1,7 +1,6 @@
 // qoolbar.js - a menu of qiki verb icons to apply to things on a web page.
 'use strict';
 
-
 (function(qoolbar, $) {
     if (typeof $ !== 'function') {
         console.error("The qoolbar.js module requires jQuery.")
@@ -27,7 +26,7 @@
             function(response) {
                 if (response.is_valid) {
                     $(selector).html(qoolbar._build(response.verbs));
-                    //noinspection JSUnusedGlobalSymbols
+                    //noinspection JSUnusedGlobalSymbols,JSValidateTypes
                     $(selector + ' .qool-verb').draggable({
                         helper: 'clone',
                         cursor: '-moz-grabbing',
@@ -148,6 +147,7 @@
 
     /**
      * Build the qoolbar div, with verb spans.
+     *
      * @param verbs[]
      * @param verbs.length
      * @param verbs.name -- e.g. 'like'
@@ -160,24 +160,46 @@
     // SEE:  http://usejsdoc.org/tags-param.html#parameters-with-properties
     qoolbar._build = function(verbs) {
         qoolbar._verb_dicts = {};
-        var return_value = $('<div>');
+        var $div = $('<div>');
         var num_verbs = verbs.length;
         for (var i_verb=0 ; i_verb < num_verbs ; i_verb++) {
             // THANKS:  (avoiding for-in loop on arrays) http://stackoverflow.com/a/3010848/673991
             var verb = verbs[i_verb];
             qoolbar._verb_dicts[verb.idn] = verb;
-            var img_html = $('<img>')
+            // noinspection RequiredAttributes
+            var $verb_icon = $('<img>')
                 .attr('src', verb.icon_url)
                 .attr('title', verb.name);
             var verb_html = $('<span>')
-                .html(img_html)
+                .html($verb_icon)
                 .addClass('qool-verb qool-verb-' + verb.name)
                 .attr('data-verb', verb.name)
                 .attr('data-vrb-idn', verb.idn);
-            return_value.append(verb_html);
+            $div.append(verb_html);
         }
-        return_value.addClass('qoolbar fade_until_hover');
-        return return_value;
+        $div.addClass('qoolbar fade_until_hover');
+        // noinspection RequiredAttributes
+        $div.append(
+            $('<span>', {
+                class: 'qool-more'
+            }).append(
+                $('<img>', {
+                    src: '/meta/static/image/icon-plus.png',
+                    title: 'more...'
+                })
+            )
+        );
+        $div.append(
+            $('<span>', {
+                class: 'qool-more-expanse qool-more-hide'
+            }).append(
+                $('<input>', {
+                    id: 'qool-new-verb',
+                    type: 'text'
+                })
+            )
+        );
+        return $div;
     };
 
     qoolbar.i_am = function(me_idn) {
@@ -193,33 +215,33 @@
         $(selector).each(function() {
             var jbo = $(this).data('jbo');
             var scores = _scorer(jbo);
-            var icons = [];
+            var verb_widgets = [];
             for (var vrb in scores) {
                 if (scores.hasOwnProperty(vrb)) {
                     var score = scores[vrb];
                     var verb_dict = qoolbar._verb_dicts[vrb];
                     // noinspection RequiredAttributes
-                    var img_html = $('<img>', {
+                    var $verb_icon = $('<img>', {
                         src: verb_dict.icon_url,
                         title: verb_dict.name + ": " + score.history.join("-")
                     });
-                    var my_score_html = $('<span>')
+                    var $my_score = $('<span>')
                         .addClass('icon-sup')
                         .text(_str(score.my));
-                    var everybody_score_html = $('<span>', {
+                    var $everybody_score = $('<span>', {
                         class: 'icon-sub'
                     }).text(score.sum.toString());
-                    var icon_bling_html = $('<span>')
+                    var $icon_bling = $('<span>')
                         .addClass('icon-bling')
-                        .append(my_score_html)
-                        .append(everybody_score_html);
-                    var icon = $('<span>')
+                        .append($my_score)
+                        .append($everybody_score);
+                    var $verb = $('<span>')
                         .addClass('qool-icon')
                         .data('num', score.my)   // Never shows up as data-num attribute, unfortunately.
                         .data('vrb-idn', vrb)
-                        .append(img_html)
-                        .append(icon_bling_html);
-                    icons.push(icon);
+                        .append($verb_icon)
+                        .append($icon_bling);
+                    verb_widgets.push($verb);
                 }
             }
 
@@ -227,18 +249,18 @@
             //    var word = jbo[idn];
             //    var verb_idn = word.vrb;
             //    var verb_dict = qoolbar._verb_dicts[verb_idn]
-            //    var img_html = $('<img>')
+            //    var $verb_icon = $('<img>')
             //        .attr('src', verb_dict.icon_url)
             //        .attr('title', verb_dict.name);
             //    var icon = $('<span>')
-            //        .html(img_html)
+            //        .html($verb_icon)
             //        .addClass('qool-icon');
-            //    icons.push(icon);
+            //    verb_widgets.push(icon);
             //}
 
             var bling = $('<span>')
                 .addClass('qool-bling');
-            bling.append(icons);
+            bling.append(verb_widgets);
             $(this).children('.qool-bling').remove();
             $(this).append(bling)
         });
@@ -261,7 +283,9 @@
      *          my -- latest num from the current user, identified by qoolbar.i_am()
      *          history -- array of nums in qoolifying words (ignoring user)
      *              TODO:  Associate nums with each user.  Requires authentication.
-     * @private
+     * @property word
+     * @property word.sbj
+     * @property word.vrb
      */
     function _scorer(jbo) {
         var scores = {};
@@ -284,7 +308,7 @@
                 for (var sbj in jbo_dict[vrb]) {
                     if (jbo_dict[vrb].hasOwnProperty(sbj)) {
                         var author_entry = jbo_dict[vrb][sbj];
-                        if (qoolbar._me_idn == sbj) {
+                        if (qoolbar._me_idn === sbj) {
                             scores[vrb].my = author_entry.num;
                         }
                         scores[vrb].sum += author_entry.num;
@@ -296,7 +320,8 @@
     }
     // TODO:  Convert other private functions to closures.
 
-    qoolbar._associationInProgress = function() {   // indicating either (1) nouns are selected, or (2) a verb is dragging
+    qoolbar._associationInProgress = function() {   // indicating either (1) nouns are selected,
+                                                                   // or (2) a verb is dragging
         $(document.body).css('background-color', 'rgb(200,200,200)');
     };
 
@@ -364,13 +389,13 @@
         $('body').on('keydown', '.qool-icon-entry', 'return', function(event) {
             event.preventDefault();
             var new_num = $(this).val();
-            if (new_num == '') {
+            if (new_num === '') {
                 qoolbar._end_all_editing();
                 return
             }
             var $qool_icon = $(this).closest('.qool-icon');
             var vrb_idn = $qool_icon.data('vrb-idn');
-            if (typeof vrb_idn != 'string') {
+            if (typeof vrb_idn !== 'string') {
                 console.error("qool-icon element needs a data-vrb-idn attribute");
             }
             var $destination = $(this).closest('.word');
