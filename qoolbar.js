@@ -25,7 +25,7 @@
              */
             function(response) {
                 if (response.is_valid) {
-                    $(selector).html(qoolbar._build(response.verbs));
+                    $(selector).append(qoolbar._build(response.verbs));
                     //noinspection JSUnusedGlobalSymbols,JSValidateTypes
                     $(selector + ' .qool-verb').draggable({
                         helper: 'clone',
@@ -39,6 +39,10 @@
                         stop: function () {
                             qoolbar._associationResolved();
                         }
+                    });
+                    $('.qoolbar').on('click', '.qool-more', function () {
+                        console.debug('new verb');
+                        $('.qool-more-expanse').toggleClass('qool-more-hide');
                     });
                     if (typeof built_callback === 'function') {
                         built_callback();
@@ -160,16 +164,14 @@
     // SEE:  http://usejsdoc.org/tags-param.html#parameters-with-properties
     qoolbar._build = function(verbs) {
         qoolbar._verb_dicts = {};
-        var $div = $('<div>');
+        var $div = $('<div>', {class: 'qoolbar fade_until_hover'});
         var num_verbs = verbs.length;
         for (var i_verb=0 ; i_verb < num_verbs ; i_verb++) {
             // THANKS:  (avoiding for-in loop on arrays) http://stackoverflow.com/a/3010848/673991
             var verb = verbs[i_verb];
             qoolbar._verb_dicts[verb.idn] = verb;
             // noinspection RequiredAttributes
-            var $verb_icon = $('<img>')
-                .attr('src', verb.icon_url)
-                .attr('title', verb.name);
+            var $verb_icon = $('<img>', {src: verb.icon_url, title: verb.name});
             var verb_html = $('<span>')
                 .html($verb_icon)
                 .addClass('qool-verb qool-verb-' + verb.name)
@@ -177,7 +179,6 @@
                 .attr('data-vrb-idn', verb.idn);
             $div.append(verb_html);
         }
-        $div.addClass('qoolbar fade_until_hover');
         // noinspection RequiredAttributes
         $div.append(
             $('<span>', {
@@ -195,7 +196,8 @@
             }).append(
                 $('<input>', {
                     id: 'qool-new-verb',
-                    type: 'text'
+                    type: 'text',
+                    placeholder: "new verb"
                 })
             )
         );
@@ -346,6 +348,7 @@
 
         //noinspection JSJQueryEfficiency
         $('.word').on('click', '.qool-icon', function (event) {
+            // TODO:  Shouldn't .word events be bound in qoolbar.bling()?
             var was_already_editing = $(this).data('was_already_editing');
             $(this).removeData('was_already_editing');
             if (was_already_editing === undefined) {
