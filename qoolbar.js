@@ -1,7 +1,7 @@
 // qoolbar.js - a menu of qiki verb icons to apply to things on a web page.
 'use strict';
 
-(function(qoolbar, $) {
+(function (qoolbar, $) {
     if (typeof $ !== 'function') {
         console.error("The qoolbar.js module requires jQuery.")
     } else if (typeof $.ui === 'undefined') {
@@ -9,11 +9,11 @@
     }
 
     qoolbar._ajax_url = null;
-    qoolbar.ajax_url = function(url) {
+    qoolbar.ajax_url = function (url) {
         qoolbar._ajax_url = url;
     };
 
-    qoolbar.html = function(selector, built_callback) {
+    qoolbar.html = function (selector, built_callback) {
         qoolbar.post(
             'qoolbar_list',
             {},
@@ -23,7 +23,7 @@
              * @param response.verbs -- (if is_valid) -- qool verbs, see qoolbar._build()
              * @param response.error_message -- (if not is_valid)
              */
-            function(response) {
+            function (response) {
                 if (response.is_valid) {
                     $(selector).append(qoolbar._build(response.verbs));
                     //noinspection JSUnusedGlobalSymbols,JSValidateTypes
@@ -40,9 +40,17 @@
                             qoolbar._associationResolved();
                         }
                     });
-                    $('.qoolbar').on('click', '.qool-more', function () {
-                        console.debug('new verb');
+                    // $('.qoolbar').on('mousedown', '.qool-more', function (event) {
+                    //     if (event.detail > 1) {
+                    //         event.preventDefault();
+                    //     }
+                    // });
+                    $('.qoolbar').on('mousedown', '.qool-more', function (event) {
                         $('.qool-more-expanse').toggleClass('qool-more-hide');
+                        event.stopPropagation();   // avoid document click's hide
+                        event.preventDefault();
+                        // THANKS:  no text select, https://stackoverflow.com/a/43321596/673991
+                        //          mousedown-preventDefault avoids double-click
                     });
                     if (typeof built_callback === 'function') {
                         built_callback();
@@ -52,13 +60,13 @@
                     alert(response.error_message);
                 }
             },
-            function(error_message) {
+            function (error_message) {
                 console.error(error_message);
             }
         );
     };
 
-    qoolbar.target = function(selector) {
+    qoolbar.target = function (selector) {
         // Identify the elements that, if we drop a qool icon on them, become the object of a new qool sentence.
         // Each must have a data-idn attribute.
         var $objects = $(selector);
@@ -74,7 +82,7 @@
         $objects.droppable({
             accept: ".qool-verb",
             hoverClass: 'drop-hover',
-            drop: function(event, ui) {
+            drop: function (event, ui) {
                 var $source = ui.draggable;
                 var $destination = $(event.target);
                 var verb_name = $source.data('verb');
@@ -95,7 +103,7 @@
                      * @param response.jbo -- (if valid) replacement json for word data-jbo.
                      * @param response.error_message (if not valid)
                      */
-                    function(response) {
+                    function (response) {
                         if (response.is_valid) {
                             _valid_sentence_response(response, vrb_idn, $destination);
                         } else {
@@ -127,7 +135,7 @@
         }
     }
 
-    qoolbar.post = function(action, variables, callback_done, callback_fail) {
+    qoolbar.post = function (action, variables, callback_done, callback_fail) {
         var fail_function;
         if (typeof callback_fail === 'undefined') {
             fail_function = qoolbar._default_fail_callback;
@@ -136,16 +144,16 @@
         }
         variables.action = action;
         variables.csrfmiddlewaretoken = $.cookie('csrftoken');
-        $.post(qoolbar._ajax_url, variables).done(function(response_body) {
+        $.post(qoolbar._ajax_url, variables).done(function (response_body) {
             var response_object = $.parseJSON(response_body);
             response_object.original_json = response_body;
             callback_done(response_object);
-        }).fail(function(jqXHR) {
+        }).fail(function (jqXHR) {
             fail_function(jqXHR.responseText);
         });
     };
 
-    qoolbar._default_fail_callback = function(error_message) {
+    qoolbar._default_fail_callback = function (error_message) {
         alert(error_message);
     };
 
@@ -162,7 +170,7 @@
      */
     // Why does verbs.name work and not verbs[].name?
     // SEE:  http://usejsdoc.org/tags-param.html#parameters-with-properties
-    qoolbar._build = function(verbs) {
+    qoolbar._build = function (verbs) {
         qoolbar._verb_dicts = {};
         var $div = $('<div>', {class: 'qoolbar fade_until_hover'});
         var num_verbs = verbs.length;
@@ -172,7 +180,7 @@
             qoolbar._verb_dicts[verb.idn] = verb;
             // noinspection RequiredAttributes
             var $verb_icon = $('<img>', {src: verb.icon_url, title: verb.name});
-            var verb_html = $('<span>')
+            var verb_html = $('<div>')
                 .html($verb_icon)
                 .addClass('qool-verb qool-verb-' + verb.name)
                 .attr('data-verb', verb.name)
@@ -181,17 +189,21 @@
         }
         // noinspection RequiredAttributes
         $div.append(
-            $('<span>', {
+            $('<div>', {
                 class: 'qool-more'
-            }).append(
-                $('<img>', {
-                    src: '/meta/static/image/icon-plus.png',
-                    title: 'more...'
-                })
+            // }).append(
+            //     $('<img>', {
+            //         // src: '/meta/static/image/icon-plus.png',
+            //         src: '/meta/static/image/icon-triple-bar.png',
+            //         title: 'more...'
+            //     })
+            // )
+            }).html(
+                "&vellip;"
             )
         );
         $div.append(
-            $('<span>', {
+            $('<div>', {
                 class: 'qool-more-expanse qool-more-hide'
             }).append(
                 $('<input>', {
@@ -204,7 +216,7 @@
         return $div;
     };
 
-    qoolbar.i_am = function(me_idn) {
+    qoolbar.i_am = function (me_idn) {
         qoolbar._me_idn = me_idn;
     };
 
@@ -213,8 +225,8 @@
      * based on their data-jbo.
      * @param selector
      */
-    qoolbar.bling = function(selector) {
-        $(selector).each(function() {
+    qoolbar.bling = function (selector) {
+        $(selector).each(function () {
             var jbo = $(this).data('jbo');
             var scores = _scorer(jbo);
             var verb_widgets = [];
@@ -292,7 +304,7 @@
     function _scorer(jbo) {
         var scores = {};
         var jbo_dict = {};
-        $.each(jbo, function(_, word) {
+        $.each(jbo, function (_, word) {
         //for (var i in jbo) {
         //    var word = jbo[i];
             if (!(word.vrb in scores)) {
@@ -322,16 +334,16 @@
     }
     // TODO:  Convert other private functions to closures.
 
-    qoolbar._associationInProgress = function() {   // indicating either (1) nouns are selected,
+    qoolbar._associationInProgress = function () {   // indicating either (1) nouns are selected,
                                                                    // or (2) a verb is dragging
         $(document.body).css('background-color', 'rgb(200,200,200)');
     };
 
-    qoolbar._associationResolved = function() {   // indicating normalcy
+    qoolbar._associationResolved = function () {   // indicating normalcy
         $(document.body).css('background-color', 'rgb(215,215,215)');
     };
 
-    qoolbar.click_to_edit = function() {
+    qoolbar.click_to_edit = function () {
 
         // TODO:  Can we really rely on $(.word) to contain the $(.qool-icon)s?  Seriously not D.R.Y.
         // Because that containment is expressed in word-diagram-call.html --> icon_diagram --> playground_extras.py --> icon-diagram-call.html
@@ -389,7 +401,7 @@
         });
 
         //noinspection JSJQueryEfficiency
-        $('body').on('keydown', '.qool-icon-entry', 'return', function(event) {
+        $('body').on('keydown', '.qool-icon-entry', 'return', function (event) {
             event.preventDefault();
             var new_num = $(this).val();
             if (new_num === '') {
@@ -413,7 +425,7 @@
                     num: new_num,   // This could be a q-string!  Dangerous??
                     txt: ''   // TODO:  Room for a comment?
                 },
-                function(response) {
+                function (response) {
                     if (response.is_valid) {
                         _valid_sentence_response(response, vrb_idn, $destination);
                         // console.info("Just in: " + response.icon_html);
@@ -428,25 +440,45 @@
         });
 
         //noinspection JSJQueryEfficiency
-        $('body').on('keydown', '.qool-icon-entry', 'esc', function(event) {
+        $('body').on('keydown', '.qool-icon-entry', 'esc', function (event) {
             event.preventDefault();
             qoolbar._end_all_editing();
         });
 
-        $(document).on('blur', '.qool-icon-entry', function() {
+        $(document).on('blur', '.qool-icon-entry', function () {
             // THANKS:  For event on dynamic selector, http://stackoverflow.com/a/1207393/673991
             if (qoolbar) {
                 qoolbar._end_all_editing();
             }
         });
+        $(document).on('click', '.qoolbar', function (event) {
+            event.stopPropagation();
+        });
+        $(document).on('click', function () {
+            $('.qool-more-expanse').addClass('qool-more-hide');
+        });
+        $(document).on('keypress', '#qool-new-verb', function (event) {
+            if (event.keyCode === 13) {
+                var verb_name = $(this).val();
+                $(this).val("");
+                console.debug(verb_name);
+                qoolbar.post(
+                    'new_verb',
+                    {name: verb_name},
+                    function new_verb_done(response) {
+                        console.debug("new verb done", response);
+                    }
+                );
+            }
+        });
     };
 
-    //qoolbar._qool_icon_entry_keypress = function() {
+    //qoolbar._qool_icon_entry_keypress = function () {
     //};
 
     qoolbar._is_anybody_editing = false;
 
-    qoolbar._end_all_editing = function() {
+    qoolbar._end_all_editing = function () {
         if (qoolbar._is_anybody_editing) {
             qoolbar._is_anybody_editing = false;
             // TODO:  _is_anybody_editing obviated?
