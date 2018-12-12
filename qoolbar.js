@@ -8,13 +8,20 @@
         console.error("The qoolbar.js module requires jQuery UI.")
     }
 
+    qoolbar.MAX_DROP_FILE_SIZE = 1000;
     qoolbar._ajax_url = null;
     qoolbar.ajax_url = function (url) {
         qoolbar._ajax_url = url;
     };
 
-    qoolbar.html = function (selector, built_callback) {
-        qoolbar.post(
+    /**
+     * Generate the qoolbar.  Typically called from $(document).ready(function() { ... });
+     *
+     * @param selector - empty div where to place it.
+     * @param built_callback -  _verb_dicts are ready.  Time to qoolbar.bling the qool targets.
+     */
+    qoolbar.html = function qoolbar_html(selector, built_callback) {
+        _post(
             'qoolbar_list',
             {},
             /**
@@ -45,30 +52,212 @@
                     //         event.preventDefault();
                     //     }
                     // });
-                    $('.qoolbar').on('mousedown', '.qool-more', function (event) {
-                        $('.qool-more-expanse').toggleClass('qool-more-hide');
-                        event.stopPropagation();   // avoid document click's hide
-                        event.preventDefault();
-                        // THANKS:  no text select, https://stackoverflow.com/a/43321596/673991
-                        //          mousedown-preventDefault avoids double-click
-                    });
+                    $('.qoolbar')
+                        .on('mousedown', '.qool-more', function (event) {
+                            $('.qool-more-expanse').toggleClass('qool-more-hide');
+                            event.stopPropagation();   // avoid document click's hide
+                            event.preventDefault();
+                            // THANKS:  no text select, https://stackoverflow.com/a/43321596/673991
+                            //          mousedown-preventDefault avoids double-click
+                        })
+                        .on('dragover dragleave', '.qool-verb', function (e) {
+                            e.stopPropagation();
+                            e.preventDefault();
+                        })
+                        .on('drop', '.qool-verb', function (e) {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            var qool_verb_name = $(this).data('verb');
+                            var qool_verb_idn = $(this).data('vrb-idn');
+                            var files = e.originalEvent.target.files || e.originalEvent.dataTransfer.files;
+                            if (files.length >= 1) {
+                                var f = files[0];
+                                console.log("Drop", qool_verb_name, qool_verb_idn, files.length, "files", f.type, f.size);
+                                if (f.size <= qoolbar.MAX_DROP_FILE_SIZE) {
+                                    var reader = new FileReader();
+                                    reader.onload = function (file_event) {
+                                        console.log("dropped", file_event.target.result.length, "bytes", file_event.target.result);
+                                        console.log("dropped", reader.result.length, "bytes", reader.result);
+                                        // TODO:  Convert reader.result to data:image
+                                        var data_image = _data_image_from(reader.result, files[0].type);
+                                        _post_icon(qool_verb_idn, data_image);
+                                    };
+                                    reader.readAsBinaryString(f);
+                                } else {
+                                    console.warn(
+                                        "File is",
+                                        f.size,
+                                        "bytes, it should be less than",
+                                        qoolbar.MAX_DROP_FILE_SIZE
+                                    );
+                                }
+                            } else {
+                                var dropped_html = e.originalEvent.dataTransfer.getData("text/html");
+                                var $dropped_container = $('<div>').append(dropped_html);
+                                var image_url = $dropped_container.find("img").attr('src');
+                                console.log("dropped url", image_url, dropped_html);
+                                // EXAMPLE:  data:image/png
+                                //     data:image/png;base64,iVBORw0KGgo ... ggg==
+                                //     <img class="irc_mut" alt="Image result for laughing emoji" onload="..."
+                                //          src="data:image/png;base64,iVB... gg==" width="16" height="16"
+                                //          style="margin-top: 169px;">
+                                // EXAMPLE:  https
+                                //     https://lh4.googleusercontent.com/proxy/pBKC ... -no-nu
+                                //     <img class="irc_mi" src="https://lh4.googleusercontent.com/proxy/pBKC ... -no-nu"
+                                //          onload="..." width="16" height="16" style="margin-top: 169px;"
+                                //          alt="Image result for laughing emoji">
+
+                                _post_icon(qool_verb_idn, image_url);
+                                // _post(
+                                //     'sentence',
+                                //     {
+                                //         vrb_txt: 'iconify',
+                                //         obj_idn: qool_verb_idn,
+                                //         txt: image_url
+                                //     },
+                                //     /**
+                                //      * @param response
+                                //      * @param response.is_valid -- all good?
+                                //      * @param response.new_words -- (if valid) json array of words to add to data-jbo.
+                                //      * @param response.error_message (if not valid)
+                                //      */
+                                //     function (response) {
+                                //         if (response.is_valid) {
+                                //             var new_word = $.parseJSON(response.new_words)[0];
+                                //             console.log("Yay iconify", new_word.idn);
+                                //         } else {
+                                //             alert(response.error_message);
+                                //         }
+                                //     }
+                                // );
+
+                            }
+                        })
+                    ;
                     if (typeof built_callback === 'function') {
                         built_callback();
                     }
                 } else {
-                    console.error(response.error_message);
-                    alert(response.error_message);
+                    console.error("qoolbar_list ajax", response.error_message);
+                    // alert(response.error_message);
                 }
             },
             function (error_message) {
-                console.error(error_message);
+                console.error("qoolbar_list post", error_message);
             }
         );
     };
 
-    qoolbar.target = function (selector) {
-        // Identify the elements that, if we drop a qool icon on them, become the object of a new qool sentence.
-        // Each must have a data-idn attribute.
+    function _post_icon(qool_verb_idn, image_url) {
+        _post(
+            'sentence',
+            {
+                vrb_txt: 'iconify',
+                obj_idn: qool_verb_idn,
+                txt: image_url
+            },
+            /**
+             * @param response
+             * @param response.is_valid -- all good?
+             * @param response.new_words -- (if valid) json array of words to add to data-jbo.
+             * @param response.error_message (if not valid)
+             */
+            function (response) {
+                if (response.is_valid) {
+                    var new_word = $.parseJSON(response.new_words)[0];
+                    console.log("Yay iconify", new_word.idn);
+                } else {
+                    console.error("_post_icon", response.error_message);
+                }
+            }
+        );
+    }
+    function _data_image_from(bytes, mime_type) {
+        var base64 = btoa(bytes);
+        console.log("data image", bytes.length, base64.length);
+        return (
+            'data:' +
+            mime_type +
+            ';base64,' +
+            base64
+        );
+    }
+
+    /**
+     * Decorate word-associated elements with the verbs and scores they've received in the past.
+     *
+     * Requirements before calling:
+     *     - The elements are expected to already have data-idn and data-jbo attributes.
+     *     - qoolbar.html() has called back, indicating the qoolbar has been built and the qool verbs are known.
+     *
+     * data-jbo of the selected object is a JSON of it's qool score histories, e.g.
+     * [
+     *     {"sbj": "0q82_A7__8A059E058E6A6308C8B0_1D0B00", "vrb": "0q82_86", "txt": "", "num": 1, "idn": "0q83_0188"},
+     *     {"sbj": "0q82_A7__8A059E058E6A6308C8B0_1D0B00", "vrb": "0q82_86", "txt": "", "num": 2, "idn": "0q83_01CD"},
+     *     {"sbj": "0q82_A7__8A059E058E6A6308C8B0_1D0B00", "vrb": "0q82_86", "txt": "", "num": 3, "idn": "0q83_01D1"},
+     *     {"sbj": "0q82_A7__8A059E058E6A6308C8B0_1D0B00", "vrb": "0q82_86", "txt": "", "num": 4, "idn": "0q83_01FA"}
+     * ]
+     *
+     * Append the qoolbar icons that have been applied to them, based on their data-jbo.
+     * @param selector
+     */
+    qoolbar.bling = function qoolbar_bling(selector) {
+        $(selector).each(function () {
+            var jbo = $(this).data('jbo');
+            var scores = _scorer(jbo);
+            var verb_widgets = [];
+            for (var vrb in scores) {
+                if (scores.hasOwnProperty(vrb)) {
+                    var score = scores[vrb];
+                    if (qoolbar._verb_dicts.hasOwnProperty(vrb)) {
+                        var verb_dict = qoolbar._verb_dicts[vrb];
+                        // console.log("bling", vrb, verb_dict);
+                        // EXAMPLE:  0q82_86 {idn: "0q82_86", icon_url: "http://tool.qiki.info/icon/thumbsup_16.png", name: "like"}
+                        var $verb_icon = _verb_icon(verb_dict);
+                        $verb_icon.attr('title', verb_dict.name + ": " + score.history.join("-"));
+                        var $my_score = $('<span>')
+                            .addClass('icon-sup')
+                            .text(_str(score.my));
+                        var $everybody_score = $('<span>', {
+                            class: 'icon-sub'
+                        }).text(score.sum.toString());
+                        var $icon_bling = $('<span>')
+                            .addClass('icon-bling')
+                            .append($my_score)
+                            .append($everybody_score);
+                        var $verb = $('<span>')
+                            .addClass('qool-icon')
+                            .data('num', score.my)   // Never shows up as data-num attribute, unfortunately.
+                            .data('vrb-idn', vrb)
+                            .append($verb_icon)
+                            .append($icon_bling);
+                        verb_widgets.push($verb);
+                    } else {
+                        console.warn("Verb", vrb, "not in qoolbar");
+                    }
+                }
+            }
+            var $bling = $('<span>')
+                .addClass('qool-bling');
+            $bling.append(verb_widgets);
+            $(this).children('.qool-bling').remove();
+            $(this).append($bling)
+        });
+    };
+
+    /**
+     * Identify qoolbar drop-targets.
+     *
+     * If someone drops a qool verb on them in the future, they will become the object of a new qool sentence.
+     *
+     * qoolbar.bling() - show past sentences
+     * qoolbar.target() - prepare for future sentences
+     *
+     * May be called right after calling qoolbar.html().  (No need to wait for its callback.)
+     *
+     * @param selector - all elements must have a data-idn attribute.
+     */
+    qoolbar.target = function qoolbar_target(selector) {
         var $objects = $(selector);
         var objects_without_idn = $objects.filter(':not([data-idn])');
         if (objects_without_idn.length > 0) {
@@ -85,13 +274,16 @@
             drop: function (event, ui) {
                 var $source = ui.draggable;
                 var $destination = $(event.target);
-                var verb_name = $source.data('verb');
+                // var verb_name = $source.data('verb');
                 var vrb_idn = $source.data('vrb-idn');
                 var destination_idn = $destination.data('idn');
-                qoolbar.post(
+                _post(
                     'sentence',
                     {
-                        vrb_txt: verb_name,
+                        // vrb_txt: verb_name,   No, this may get a different verb by the same name.  Use idn.
+                        // NOTE:  This solved the long-fought bug with multiple laugh verbs.
+                        //        The new one was in the qoolbar, but lex['laugh'] got the old one.
+                        vrb_idn: vrb_idn,
                         obj_idn: destination_idn,
                         num_add: '1',
                         txt: ''
@@ -107,7 +299,7 @@
                         if (response.is_valid) {
                             _valid_sentence_response(response, vrb_idn, $destination);
                         } else {
-                            alert(response.error_message);
+                            console.error("qool verb drop", response.error_message);
                         }
                     }
                 );
@@ -115,46 +307,134 @@
         });
     };
 
-    function _valid_sentence_response(response, vrb_idn, $destination) {
-        var $qool_icon = $destination.find('.qool-icon').filter('[data-vrb-idn="' + vrb_idn + '"]');
-        if (response.hasOwnProperty('icon_html')) {
-            //console.info(response.icon_html);
-            if ($qool_icon.length > 0) {
-                $qool_icon.replaceWith(response.icon_html)
-            } else {
-                $destination.find('.qool-bling').append(response.icon_html)
-            }
-        } else if (response.hasOwnProperty('jbo')) {
-            var new_jbos = $.parseJSON(response.jbo);
-            var new_jbo = new_jbos[0];
-            $destination.data('jbo').push(new_jbo);
-            //console.info($destination.data('jbo'));
-            qoolbar.bling($destination);
-        } else {
-            window.location.reload(true);
-        }
-    }
+    qoolbar.click_to_edit = function qoolbar_click_to_edit(selector) {
 
-    qoolbar.post = function (action, variables, callback_done, callback_fail) {
-        var fail_function;
-        if (typeof callback_fail === 'undefined') {
-            fail_function = qoolbar._default_fail_callback;
-        } else {
-            fail_function = callback_fail;
-        }
-        variables.action = action;
-        variables.csrfmiddlewaretoken = $.cookie('csrftoken');
-        $.post(qoolbar._ajax_url, variables).done(function (response_body) {
-            var response_object = $.parseJSON(response_body);
-            response_object.original_json = response_body;
-            callback_done(response_object);
-        }).fail(function (jqXHR) {
-            fail_function(jqXHR.responseText);
+        // TODO:  Can we really rely on $(selector) to contain the $(.qool-icon)s?  Seriously not D.R.Y.
+        // Because that containment is expressed in word-diagram-call.html --> icon_diagram --> playground_extras.py --> icon-diagram-call.html
+        // Is the solution to develop a REST-full API??
+
+        //noinspection JSJQueryEfficiency
+        $(selector).on('mousedown', '.qool-icon', function () {
+            var was_already_editing = $(this).hasClass('qool-editing');
+            $(this).data('was_already_editing', was_already_editing);
         });
-    };
 
-    qoolbar._default_fail_callback = function (error_message) {
-        alert(error_message);
+        // Blur, if it happens, will come between mousedown and click events.
+        // THANKS:  http://stackoverflow.com/a/10653160/673991
+
+        //noinspection JSJQueryEfficiency
+        $(selector).on('click', '.qool-icon', function (event) {
+            // TODO:  Shouldn't selector events be bound in qoolbar.target()??
+            var was_already_editing = $(this).data('was_already_editing');
+            $(this).removeData('was_already_editing');
+            if (was_already_editing === undefined) {
+                console.warn("Qool icon click without a preceding mousedown?");
+            }
+            if (!was_already_editing) {
+                $(this).addClass('qool-editing');
+                qoolbar._is_anybody_editing = true;
+                var old_num = $(this).data('num');
+                var $input = $('<input>', {
+                    type: 'text',
+                    // TODO:  IE7 needs type in definition
+                    // SEE:  http://stackoverflow.com/questions/9898442/jquery-create-element-with-attribute-differences
+                    class: 'qool-icon-entry',
+                    value: old_num
+                });
+                var $span_input = $('<span>', {
+                    class: 'qool-icon-entry-container'
+                });
+                $span_input.append($input);
+                $(this).append($span_input);
+                $input.select();
+                var $icon_sup = $(this).find('.icon-sup');
+                var icon_sup_pos = $icon_sup.offset();
+                $input.offset({
+                     'top': icon_sup_pos.top - $input.outerHeight() + $icon_sup.outerHeight(),
+                    'left': icon_sup_pos.left
+                });
+            }
+            event.stopPropagation();
+        });
+
+        //noinspection JSJQueryEfficiency
+        $(selector).on('click', '.qool-icon-entry', function (event) {
+            // Clicking the input field itself should not cancel editing.
+            // THANKS:  For nested click ignoring, http://stackoverflow.com/a/2364639/673991
+            event.stopPropagation();
+        });
+
+        //noinspection JSJQueryEfficiency
+        $('body').on('keydown', '.qool-icon-entry', 'return', function (event) {
+            event.preventDefault();
+            var new_num = $(this).val();
+            if (new_num === '') {
+                qoolbar._end_all_editing();
+                return
+            }
+            var $qool_icon = $(this).closest('.qool-icon');
+            var vrb_idn = $qool_icon.data('vrb-idn');
+            if (typeof vrb_idn !== 'string') {
+                console.error("qool-icon element needs a data-vrb-idn attribute");
+            }
+            var $destination = $(this).closest(selector);
+            var obj_idn = $destination.data('idn');
+            console.debug("obj_idn type " + typeof obj_idn);
+            // TODO:  Search instead for a class that qoolbar.target() installed?  Better D.R.Y.
+            _post(
+                'sentence',
+                {
+                    vrb_idn: vrb_idn,
+                    obj_idn: obj_idn,
+                    num: new_num,   // This could be a q-string!  Dangerous??
+                    txt: ''   // TODO:  Room for a comment?
+                },
+                function (response) {
+                    if (response.is_valid) {
+                        _valid_sentence_response(response, vrb_idn, $destination);
+                        // console.info("Just in: " + response.icon_html);
+                        qoolbar._end_all_editing();
+                        $qool_icon.replaceWith(response.icon_html);
+                    } else {
+                        console.warn("Error editing num: " + response.error_message);
+                    }
+                }
+            );
+        });
+
+        //noinspection JSJQueryEfficiency
+        $('body').on('keydown', '.qool-icon-entry', 'esc', function (event) {
+            event.preventDefault();
+            qoolbar._end_all_editing();
+        });
+
+        $(document).on('blur', '.qool-icon-entry', function () {
+            // THANKS:  For event on dynamic selector, http://stackoverflow.com/a/1207393/673991
+            if (qoolbar) {
+                qoolbar._end_all_editing();
+            }
+        });
+        $(document).on('click', '.qoolbar', function (event) {
+            event.stopPropagation();
+        });
+        $(document).on('click', function () {
+            $('.qool-more-expanse').addClass('qool-more-hide');
+        });
+        $(document).on('keypress', '#qool-new-verb', function (event) {
+            if (event.keyCode === 13) {
+                var verb_name = $(this).val();
+                $(this).val("");
+                console.debug(verb_name);
+                _post(
+                    'new_verb',
+                    {name: verb_name},
+                    function new_verb_done(response) {
+                        console.debug("new verb done", response);
+                        // TODO:  Add to qoolbar._verb_dicts, and maybe call qoolbar._build()
+                    }
+                );
+            }
+        });
     };
 
     /**
@@ -170,7 +450,7 @@
      */
     // Why does verbs.name work and not verbs[].name?
     // SEE:  http://usejsdoc.org/tags-param.html#parameters-with-properties
-    qoolbar._build = function (verbs) {
+    qoolbar._build = function _qoolbar_build(verbs) {
         qoolbar._verb_dicts = {};
         var $div = $('<div>', {class: 'qoolbar fade_until_hover'});
         var num_verbs = verbs.length;
@@ -178,8 +458,18 @@
             // THANKS:  (avoiding for-in loop on arrays) http://stackoverflow.com/a/3010848/673991
             var verb = verbs[i_verb];
             qoolbar._verb_dicts[verb.idn] = verb;
-            // noinspection RequiredAttributes
-            var $verb_icon = $('<img>', {src: verb.icon_url, title: verb.name});
+            var $verb_icon = _verb_icon(verb);
+            // if (verb.icon_url === null) {
+            //     console.log("Icon", verb.name, "((empty))");
+            //     $verb_icon = $('<div>', {
+            //         class: 'letter-icon',
+            //         title: verb.name
+            //     }).text(verb.name.charAt(0).toUpperCase());
+            // } else {
+            //     console.log("Icon", verb.name, verb.icon_url);
+            //     // noinspection RequiredAttributes, HtmlRequiredAltAttribute
+            //     $verb_icon = $('<img>', {src: verb.icon_url, title: verb.name});
+            // }
             var verb_html = $('<div>')
                 .html($verb_icon)
                 .addClass('qool-verb qool-verb-' + verb.name)
@@ -213,71 +503,74 @@
                 })
             )
         );
+        console.log('_verb_dicts', qoolbar._verb_dicts);
         return $div;
     };
 
-    qoolbar.i_am = function (me_idn) {
-        qoolbar._me_idn = me_idn;
-    };
+    function _valid_sentence_response(response, vrb_idn, $destination) {
+        var $qool_icon = $destination.find('.qool-icon').filter('[data-vrb-idn="' + vrb_idn + '"]');
+        if (response.hasOwnProperty('icon_html')) {
+            // TODO:  This clause never happens any more, right??
+            //console.info(response.icon_html);
+            if ($qool_icon.length > 0) {
+                $qool_icon.replaceWith(response.icon_html)
+            } else {
+                $destination.find('.qool-bling').append(response.icon_html)
+            }
+        } else if (response.hasOwnProperty('jbo')) {
+            var new_word = $.parseJSON(response.new_words)[0];
+            // var new_jbo = new_jbos[0];
+            $destination.data('jbo').push(new_word);
+            //console.info($destination.data('jbo'));
+            qoolbar.bling($destination);
+        } else {
+            window.location.reload(true);
+        }
+    }
+
+    function _post(action, variables, callback_done, callback_fail) {
+        var fail_function;
+        if (typeof callback_fail === 'undefined') {
+            fail_function = function (error_message) {
+                console.error("_post", action, error_message);
+            };
+        } else {
+            fail_function = callback_fail;
+        }
+        variables.action = action;
+        variables.csrfmiddlewaretoken = $.cookie('csrftoken');
+        $.post(qoolbar._ajax_url, variables).done(function (response_body) {
+            var response_object = $.parseJSON(response_body);
+            response_object.original_json = response_body;
+            callback_done(response_object);
+        }).fail(function (jqXHR) {
+            fail_function(jqXHR.responseText);
+        });
+    }
 
     /**
-     * Decorate words with the qoolbar icons that have been applied to them,
-     * based on their data-jbo.
-     * @param selector
+     * Construct a DOM icon for the verb.
+     *
+     * @param verb -- associative array of the verb
+     * @param verb.name -- e.g. 'like'
+     * @param verb.icon_url -- from the latest iconify sentence, or null if there isn't any
+     * @return {jQuery}
+     * @private
      */
-    qoolbar.bling = function (selector) {
-        $(selector).each(function () {
-            var jbo = $(this).data('jbo');
-            var scores = _scorer(jbo);
-            var verb_widgets = [];
-            for (var vrb in scores) {
-                if (scores.hasOwnProperty(vrb)) {
-                    var score = scores[vrb];
-                    var verb_dict = qoolbar._verb_dicts[vrb];
-                    // noinspection RequiredAttributes
-                    var $verb_icon = $('<img>', {
-                        src: verb_dict.icon_url,
-                        title: verb_dict.name + ": " + score.history.join("-")
-                    });
-                    var $my_score = $('<span>')
-                        .addClass('icon-sup')
-                        .text(_str(score.my));
-                    var $everybody_score = $('<span>', {
-                        class: 'icon-sub'
-                    }).text(score.sum.toString());
-                    var $icon_bling = $('<span>')
-                        .addClass('icon-bling')
-                        .append($my_score)
-                        .append($everybody_score);
-                    var $verb = $('<span>')
-                        .addClass('qool-icon')
-                        .data('num', score.my)   // Never shows up as data-num attribute, unfortunately.
-                        .data('vrb-idn', vrb)
-                        .append($verb_icon)
-                        .append($icon_bling);
-                    verb_widgets.push($verb);
-                }
-            }
+    function _verb_icon(verb) {
+        var $verb_icon;
+        if (verb.icon_url === null) {
+            var cap_first_letter = verb.name.charAt(0).toUpperCase();
+            $verb_icon = $('<div>', {class: 'letter-icon', title: verb.name}).text(cap_first_letter);
+        } else {
+            // noinspection RequiredAttributes, HtmlRequiredAltAttribute
+            $verb_icon = $('<img>', {src: verb.icon_url, title: verb.name});
+        }
+        return $verb_icon;
+    }
 
-            //for (var idn in jbo) {
-            //    var word = jbo[idn];
-            //    var verb_idn = word.vrb;
-            //    var verb_dict = qoolbar._verb_dicts[verb_idn]
-            //    var $verb_icon = $('<img>')
-            //        .attr('src', verb_dict.icon_url)
-            //        .attr('title', verb_dict.name);
-            //    var icon = $('<span>')
-            //        .html($verb_icon)
-            //        .addClass('qool-icon');
-            //    verb_widgets.push(icon);
-            //}
-
-            var bling = $('<span>')
-                .addClass('qool-bling');
-            bling.append(verb_widgets);
-            $(this).children('.qool-bling').remove();
-            $(this).append(bling)
-        });
+    qoolbar.i_am = function (me_idn) {
+        qoolbar._me_idn = me_idn;
     };
 
     function _str(x) {
@@ -290,8 +583,9 @@
 
     /**
      * Tally scores for a word, from its qoolifying words.
+     *
      * @param jbo -- array of qoolifying words (properties idn, sbj, vrb, txt, num)
-     * @returns {{}} -- associative object whose properties are verb qstrings (e.g. '0q82_25')
+     * @return {{}} -- associative object whose properties (keys) are verb qstrings (e.g. '0q82_25')
      *      and whose values are objects with these properties associated with that verb:
      *          sum -- sum of each user's latest num
      *          my -- latest num from the current user, identified by qoolbar.i_am()
@@ -335,142 +629,12 @@
     // TODO:  Convert other private functions to closures.
 
     qoolbar._associationInProgress = function () {   // indicating either (1) nouns are selected,
-                                                                   // or (2) a verb is dragging
-        $(document.body).css('background-color', 'rgb(200,200,200)');
+                                                                    // or (2) a verb is dragging
+        $(document.body).addClass('target-in-progress');
     };
 
     qoolbar._associationResolved = function () {   // indicating normalcy
-        $(document.body).css('background-color', 'rgb(215,215,215)');
-    };
-
-    qoolbar.click_to_edit = function () {
-
-        // TODO:  Can we really rely on $(.word) to contain the $(.qool-icon)s?  Seriously not D.R.Y.
-        // Because that containment is expressed in word-diagram-call.html --> icon_diagram --> playground_extras.py --> icon-diagram-call.html
-        // Is the solution to develop a REST-full API??
-
-        //noinspection JSJQueryEfficiency
-        $('.word').on('mousedown', '.qool-icon', function () {
-            var was_already_editing = $(this).hasClass('qool-editing');
-            $(this).data('was_already_editing', was_already_editing);
-        });
-
-        // Blur, if it happens, will come between mousedown and click events.
-        // THANKS:  http://stackoverflow.com/a/10653160/673991
-
-        //noinspection JSJQueryEfficiency
-        $('.word').on('click', '.qool-icon', function (event) {
-            // TODO:  Shouldn't .word events be bound in qoolbar.bling()?
-            var was_already_editing = $(this).data('was_already_editing');
-            $(this).removeData('was_already_editing');
-            if (was_already_editing === undefined) {
-                console.warn("Qool icon click without a preceding mousedown?");
-            }
-            if (!was_already_editing) {
-                $(this).addClass('qool-editing');
-                qoolbar._is_anybody_editing = true;
-                var old_num = $(this).data('num');
-                var $input = $('<input>', {
-                    type: 'text',
-                    // TODO:  IE7 needs type in definition
-                    // SEE:  http://stackoverflow.com/questions/9898442/jquery-create-element-with-attribute-differences
-                    class: 'qool-icon-entry',
-                    value: old_num
-                });
-                var $span_input = $('<span>', {
-                    class: 'qool-icon-entry-container'
-                });
-                $span_input.append($input);
-                $(this).append($span_input);
-                $input.select();
-                var $icon_sup = $(this).find('.icon-sup');
-                var icon_sup_pos = $icon_sup.offset();
-                $input.offset({
-                     'top': icon_sup_pos.top - $input.outerHeight() + $icon_sup.outerHeight(),
-                    'left': icon_sup_pos.left
-                });
-            }
-            event.stopPropagation();
-        });
-
-        //noinspection JSJQueryEfficiency
-        $('.word').on('click', '.qool-icon-entry', function (event) {
-            // Clicking the input field itself should not cancel editing.
-            // THANKS:  For nested click ignoring, http://stackoverflow.com/a/2364639/673991
-            event.stopPropagation();
-        });
-
-        //noinspection JSJQueryEfficiency
-        $('body').on('keydown', '.qool-icon-entry', 'return', function (event) {
-            event.preventDefault();
-            var new_num = $(this).val();
-            if (new_num === '') {
-                qoolbar._end_all_editing();
-                return
-            }
-            var $qool_icon = $(this).closest('.qool-icon');
-            var vrb_idn = $qool_icon.data('vrb-idn');
-            if (typeof vrb_idn !== 'string') {
-                console.error("qool-icon element needs a data-vrb-idn attribute");
-            }
-            var $destination = $(this).closest('.word');
-            var obj_idn = $destination.data('idn');
-            console.debug("obj_idn type " + typeof obj_idn);
-            // TODO:  Search instead for a class that qoolbar.target() installed?  Better D.R.Y.
-            qoolbar.post(
-                'sentence',
-                {
-                    vrb_idn: vrb_idn,
-                    obj_idn: obj_idn,
-                    num: new_num,   // This could be a q-string!  Dangerous??
-                    txt: ''   // TODO:  Room for a comment?
-                },
-                function (response) {
-                    if (response.is_valid) {
-                        _valid_sentence_response(response, vrb_idn, $destination);
-                        // console.info("Just in: " + response.icon_html);
-                        qoolbar._end_all_editing();
-                        console.debug("HACK " + response.jbo);
-                        $qool_icon.replaceWith(response.icon_html);
-                    } else {
-                        console.warn("Error editing num: " + response.error_message);
-                    }
-                }
-            );
-        });
-
-        //noinspection JSJQueryEfficiency
-        $('body').on('keydown', '.qool-icon-entry', 'esc', function (event) {
-            event.preventDefault();
-            qoolbar._end_all_editing();
-        });
-
-        $(document).on('blur', '.qool-icon-entry', function () {
-            // THANKS:  For event on dynamic selector, http://stackoverflow.com/a/1207393/673991
-            if (qoolbar) {
-                qoolbar._end_all_editing();
-            }
-        });
-        $(document).on('click', '.qoolbar', function (event) {
-            event.stopPropagation();
-        });
-        $(document).on('click', function () {
-            $('.qool-more-expanse').addClass('qool-more-hide');
-        });
-        $(document).on('keypress', '#qool-new-verb', function (event) {
-            if (event.keyCode === 13) {
-                var verb_name = $(this).val();
-                $(this).val("");
-                console.debug(verb_name);
-                qoolbar.post(
-                    'new_verb',
-                    {name: verb_name},
-                    function new_verb_done(response) {
-                        console.debug("new verb done", response);
-                    }
-                );
-            }
-        });
+        $(document.body).removeClass('target-in-progress');
     };
 
     //qoolbar._qool_icon_entry_keypress = function () {

@@ -1,5 +1,13 @@
 /* qoolbar styles */
 
+.target-environment {
+    background-color: rgb(216,216,216);
+}
+.target-environment.target-in-progress {
+    background-color: rgb(192,192,192);
+}
+
+
 /*noinspection CssUnknownProperty,CssOptimizeSimilarProperties*/
 .qoolbar {
     display: block;
@@ -137,4 +145,23 @@
          -o-border-radius: 5px;
             border-radius: 5px;
     border-width: 1px;
+}
+
+/*noinspection CssUnknownProperty*/
+.letter-icon {
+    font: 14px serif;
+    line-height: 14px;
+         height: 14px;
+          width: 14px;
+    border: 1px solid #888888;
+    -webkit-border-radius: 3px;
+       -moz-border-radius: 3px;
+         -o-border-radius: 3px;
+            border-radius: 3px;
+
+    color: black;
+    background-color: white;
+    text-align: center;
+    vertical-align: 18%;
+    display: inline-block;
 }
