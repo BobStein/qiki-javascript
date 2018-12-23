@@ -3,9 +3,9 @@
 
 (function (qoolbar, $) {
     if (typeof $ !== 'function') {
-        console.error("The qoolbar.js module requires jQuery.")
+        console.error("The qoolbar.js module requires jQuery.");
     } else if (typeof $.ui === 'undefined') {
-        console.error("The qoolbar.js module requires jQuery UI.")
+        console.error("The qoolbar.js module requires jQuery UI.");
     }
 
     qoolbar.MAX_DROP_FILE_SIZE = 1000;
@@ -13,11 +13,14 @@
     qoolbar.ajax_url = function (url) {
         qoolbar._ajax_url = url;
     };
+    qoolbar.ICON_ENTRY_TOP_FUDGE = -3;   // Correspond to bottom padding and margin
+    qoolbar.ICON_ENTRY_LEFT_FUDGE = 1;   // Correspond to left padding and margin
+    var UNICODE_TIMES = '\u00D7';   // aka &times;
 
     /**
      * Generate the qoolbar.  Typically called from $(document).ready(function() { ... });
      *
-     * @param selector - empty div where to place it.
+     * @param selector - empty div wherein to place it.
      * @param built_callback -  _verb_dicts are ready.  Time to qoolbar.bling the qool targets.
      */
     qoolbar.html = function qoolbar_html(selector, built_callback) {
@@ -41,20 +44,14 @@
                         scroll: false,
                         start: function () {
                             qoolbar._associationInProgress();
-                            //$(ui.helper).addClass('dragging');
                         },
                         stop: function () {
                             qoolbar._associationResolved();
                         }
                     });
-                    // $('.qoolbar').on('mousedown', '.qool-more', function (event) {
-                    //     if (event.detail > 1) {
-                    //         event.preventDefault();
-                    //     }
-                    // });
                     $('.qoolbar')
-                        .on('mousedown', '.qool-more', function (event) {
-                            $('.qool-more-expanse').toggleClass('qool-more-hide');
+                        .on('mousedown', '.qool-more-switch', function (event) {
+                            _qool_more_toggle();
                             event.stopPropagation();   // avoid document click's hide
                             event.preventDefault();
                             // THANKS:  no text select, https://stackoverflow.com/a/43321596/673991
@@ -75,6 +72,18 @@
                                 console.log("Drop", qool_verb_name, qool_verb_idn, files.length, "files", f.type, f.size);
                                 if (f.size <= qoolbar.MAX_DROP_FILE_SIZE) {
                                     var reader = new FileReader();
+                                    /**
+                                     * Read icon image file.
+                                     *
+                                     * @param file_event
+                                     * @param file_event.target
+                                     * @param file_event.target.result
+                                     * @param file_event.target.result[]
+                                     *
+                                     * @property reader
+                                     * @property reader.result
+                                     * @property reader.result[]
+                                     */
                                     reader.onload = function (file_event) {
                                         console.log("dropped", file_event.target.result.length, "bytes", file_event.target.result);
                                         console.log("dropped", reader.result.length, "bytes", reader.result);
@@ -108,28 +117,6 @@
                                 //          alt="Image result for laughing emoji">
 
                                 _post_icon(qool_verb_idn, image_url);
-                                // _post(
-                                //     'sentence',
-                                //     {
-                                //         vrb_txt: 'iconify',
-                                //         obj_idn: qool_verb_idn,
-                                //         txt: image_url
-                                //     },
-                                //     /**
-                                //      * @param response
-                                //      * @param response.is_valid -- all good?
-                                //      * @param response.new_words -- (if valid) json array of words to add to data-jbo.
-                                //      * @param response.error_message (if not valid)
-                                //      */
-                                //     function (response) {
-                                //         if (response.is_valid) {
-                                //             var new_word = $.parseJSON(response.new_words)[0];
-                                //             console.log("Yay iconify", new_word.idn);
-                                //         } else {
-                                //             alert(response.error_message);
-                                //         }
-                                //     }
-                                // );
 
                             }
                         })
@@ -139,7 +126,6 @@
                     }
                 } else {
                     console.error("qoolbar_list ajax", response.error_message);
-                    // alert(response.error_message);
                 }
             },
             function (error_message) {
@@ -148,6 +134,13 @@
         );
     };
 
+    /**
+     * Iconify:  associate an icon URL with a verb.
+     *
+     * @param qool_verb_idn - the qstring of the idn of the word defining the verb
+     * @param image_url - e.g. http://... or data:image/png;base65,...
+     * @private
+     */
     function _post_icon(qool_verb_idn, image_url) {
         _post(
             'sentence',
@@ -172,6 +165,15 @@
             }
         );
     }
+
+    /**
+     * Convert image to data:image URL.
+     *
+     * @param bytes - raw contents of the image
+     * @param mime_type - e.g. 'image/png'
+     * @return {string}
+     * @private
+     */
     function _data_image_from(bytes, mime_type) {
         var base64 = btoa(bytes);
         console.log("data image", bytes.length, base64.length);
@@ -237,10 +239,9 @@
                     }
                 }
             }
-            var $bling = $('<span>')
-                .addClass('qool-bling');
+            var $bling = $('<span>', {class: 'qool-bling'});
             $bling.append(verb_widgets);
-            $(this).children('.qool-bling').remove();
+            $(this).children('.qool-bling').remove();   // remove old bling
             $(this).append($bling)
         });
     };
@@ -274,14 +275,13 @@
             drop: function (event, ui) {
                 var $source = ui.draggable;
                 var $destination = $(event.target);
-                // var verb_name = $source.data('verb');
                 var vrb_idn = $source.data('vrb-idn');
                 var destination_idn = $destination.data('idn');
                 _post(
                     'sentence',
                     {
                         // vrb_txt: verb_name,   No, this may get a different verb by the same name.  Use idn.
-                        // NOTE:  This solved the long-fought bug with multiple laugh verbs.
+                        // NOTE:  This solved a long-fought bug with multiple laugh verbs.
                         //        The new one was in the qoolbar, but lex['laugh'] got the old one.
                         vrb_idn: vrb_idn,
                         obj_idn: destination_idn,
@@ -325,15 +325,16 @@
         //noinspection JSJQueryEfficiency
         $(selector).on('click', '.qool-icon', function (event) {
             // TODO:  Shouldn't selector events be bound in qoolbar.target()??
-            var was_already_editing = $(this).data('was_already_editing');
-            $(this).removeData('was_already_editing');
+            var $qool_icon = $(this);
+            var was_already_editing = $qool_icon.data('was_already_editing');
+            $qool_icon.removeData('was_already_editing');
             if (was_already_editing === undefined) {
                 console.warn("Qool icon click without a preceding mousedown?");
             }
             if (!was_already_editing) {
-                $(this).addClass('qool-editing');
+                $qool_icon.addClass('qool-editing');
                 qoolbar._is_anybody_editing = true;
-                var old_num = $(this).data('num');
+                var old_num = $qool_icon.data('num');
                 var $input = $('<input>', {
                     type: 'text',
                     // TODO:  IE7 needs type in definition
@@ -341,17 +342,19 @@
                     class: 'qool-icon-entry',
                     value: old_num
                 });
-                var $span_input = $('<span>', {
-                    class: 'qool-icon-entry-container'
-                });
-                $span_input.append($input);
-                $(this).append($span_input);
+                $qool_icon.find('.icon-bling').append($input);
                 $input.select();
-                var $icon_sup = $(this).find('.icon-sup');
+                var $icon_sup = $qool_icon.find('.icon-sup');
                 var icon_sup_pos = $icon_sup.offset();
                 $input.offset({
-                     'top': icon_sup_pos.top - $input.outerHeight() + $icon_sup.outerHeight(),
-                    'left': icon_sup_pos.left
+                     top:
+                         icon_sup_pos.top
+                         - $input.outerHeight()
+                         + $icon_sup.outerHeight()
+                         + qoolbar.ICON_ENTRY_TOP_FUDGE,
+                    left:
+                        icon_sup_pos.left
+                        + qoolbar.ICON_ENTRY_LEFT_FUDGE
                 });
             }
             event.stopPropagation();
@@ -367,7 +370,7 @@
         //noinspection JSJQueryEfficiency
         $('body').on('keydown', '.qool-icon-entry', 'return', function (event) {
             event.preventDefault();
-            var new_num = $(this).val();
+            var new_num = $(this).val().trim();
             if (new_num === '') {
                 qoolbar._end_all_editing();
                 return
@@ -392,7 +395,6 @@
                 function (response) {
                     if (response.is_valid) {
                         _valid_sentence_response(response, vrb_idn, $destination);
-                        // console.info("Just in: " + response.icon_html);
                         qoolbar._end_all_editing();
                         $qool_icon.replaceWith(response.icon_html);
                     } else {
@@ -418,7 +420,7 @@
             event.stopPropagation();
         });
         $(document).on('click', function () {
-            $('.qool-more-expanse').addClass('qool-more-hide');
+            _qool_more_toggle(false);
         });
         $(document).on('keypress', '#qool-new-verb', function (event) {
             if (event.keyCode === 13) {
@@ -438,7 +440,7 @@
     };
 
     /**
-     * Build the qoolbar div, with verb spans.
+     * Build the qoolbar DOM given an array of verb names and icons.
      *
      * @param verbs[]
      * @param verbs.length
@@ -448,8 +450,8 @@
      * @returns {*|HTMLElement}
      * @private
      */
-    // Why does verbs.name work and not verbs[].name?
-    // SEE:  http://usejsdoc.org/tags-param.html#parameters-with-properties
+    // NOTE:  Why does verbs.name work and not verbs[].name?
+    //        http://usejsdoc.org/tags-param.html#parameters-with-properties
     qoolbar._build = function _qoolbar_build(verbs) {
         qoolbar._verb_dicts = {};
         var $div = $('<div>', {class: 'qoolbar fade_until_hover'});
@@ -458,43 +460,32 @@
             // THANKS:  (avoiding for-in loop on arrays) http://stackoverflow.com/a/3010848/673991
             var verb = verbs[i_verb];
             qoolbar._verb_dicts[verb.idn] = verb;
-            var $verb_icon = _verb_icon(verb);
-            // if (verb.icon_url === null) {
-            //     console.log("Icon", verb.name, "((empty))");
-            //     $verb_icon = $('<div>', {
-            //         class: 'letter-icon',
-            //         title: verb.name
-            //     }).text(verb.name.charAt(0).toUpperCase());
-            // } else {
-            //     console.log("Icon", verb.name, verb.icon_url);
-            //     // noinspection RequiredAttributes, HtmlRequiredAltAttribute
-            //     $verb_icon = $('<img>', {src: verb.icon_url, title: verb.name});
-            // }
-            var verb_html = $('<div>')
-                .html($verb_icon)
-                .addClass('qool-verb qool-verb-' + verb.name)
-                .attr('data-verb', verb.name)
-                .attr('data-vrb-idn', verb.idn);
-            $div.append(verb_html);
+            var $verb_tool = $('<div>', {
+                class: 'qool-verb qool-verb-' + verb.name,
+                'data-verb': verb.name,
+                'data-vrb-idn': verb.idn
+            });
+            $verb_tool.append(_verb_icon(verb));
+            var $verb_delete = $('<span>', {
+                class: 'verb-deletion hide_until_more',
+                title: "remove '" + verb.name + "' from your qoolbar"
+            }).text(UNICODE_TIMES);
+            $verb_tool.prepend($verb_delete);
+            $div.append($verb_tool);
         }
         // noinspection RequiredAttributes
         $div.append(
             $('<div>', {
-                class: 'qool-more'
-            // }).append(
-            //     $('<img>', {
-            //         // src: '/meta/static/image/icon-plus.png',
-            //         src: '/meta/static/image/icon-triple-bar.png',
-            //         title: 'more...'
-            //     })
-            // )
+                class: 'qool-more-switch',
+                title: "more qoolbar options"
             }).html(
                 "&vellip;"
             )
         );
         $div.append(
             $('<div>', {
-                class: 'qool-more-expanse qool-more-hide'
+                class: 'qool-more-expanse',   // qool-more-hide'
+                title: "Enter a name to create a verb."
             }).append(
                 $('<input>', {
                     id: 'qool-new-verb',
@@ -503,15 +494,19 @@
                 })
             )
         );
+        _qool_more_toggle(false);
         console.log('_verb_dicts', qoolbar._verb_dicts);
         return $div;
     };
+
+    function _qool_more_toggle(is_expanded) {
+        $('.qoolbar').toggleClass('qool-more-expand', is_expanded);
+    }
 
     function _valid_sentence_response(response, vrb_idn, $destination) {
         var $qool_icon = $destination.find('.qool-icon').filter('[data-vrb-idn="' + vrb_idn + '"]');
         if (response.hasOwnProperty('icon_html')) {
             // TODO:  This clause never happens any more, right??
-            //console.info(response.icon_html);
             if ($qool_icon.length > 0) {
                 $qool_icon.replaceWith(response.icon_html)
             } else {
@@ -519,9 +514,7 @@
             }
         } else if (response.hasOwnProperty('jbo')) {
             var new_word = $.parseJSON(response.new_words)[0];
-            // var new_jbo = new_jbos[0];
             $destination.data('jbo').push(new_word);
-            //console.info($destination.data('jbo'));
             qoolbar.bling($destination);
         } else {
             window.location.reload(true);
@@ -599,8 +592,6 @@
         var scores = {};
         var jbo_dict = {};
         $.each(jbo, function (_, word) {
-        //for (var i in jbo) {
-        //    var word = jbo[i];
             if (!(word.vrb in scores)) {
                 scores[word.vrb] = {'sum': 0, 'my': null, 'history': []};
             }
@@ -637,25 +628,22 @@
         $(document.body).removeClass('target-in-progress');
     };
 
-    //qoolbar._qool_icon_entry_keypress = function () {
-    //};
-
     qoolbar._is_anybody_editing = false;
 
     qoolbar._end_all_editing = function () {
         if (qoolbar._is_anybody_editing) {
             qoolbar._is_anybody_editing = false;
-            // TODO:  _is_anybody_editing obviated?
-            // This _is_anybody_editing flag presumably makes _end_all_editing() less of a drag.
-            // Otherwise there might be frequent expensive jQuery removing.
-            // But that's when it used to be called every document click.
-            // Now with a saner on-blur dynamically filtered by .qool-icon-entry,
-            // it would get called a lot less often.
-            // So it's possible _end_all_editing() should be shortened
-            // to just the two remove calls.
-            // Sheesh yes, I think this flag is always true when this function is called!
+            // TODO:  _is_anybody_editing -- is this now obviated?
+            //        This _is_anybody_editing flag presumably makes _end_all_editing() less of a drag.
+            //        Otherwise there might be frequent expensive jQuery removing.
+            //        But that's when it used to be called every document click.
+            //        Now with a saner on-blur dynamically filtered by .qool-icon-entry,
+            //        it would get called a lot less often.
+            //        So it's possible _end_all_editing() should be shortened
+            //        to just the two remove calls.
+            //        Sheesh yes, I think this flag is always true when this function is called!
             $('.qool-editing').removeClass('qool-editing');
-            $('.qool-icon-entry-container').remove();
+            $('.qool-icon-entry').remove();
         }
     };
 

@@ -29,8 +29,16 @@
             border-bottom-left-radius: 8px;
 }
 
+.qool-verb {   /* in the qoolbar */
+    cursor: move;   /* draggable */
+}
+
+.qool-icon {   /* decorating a target (a word-associated thingie) */
+    cursor: pointer;   /* pointing finger */
+}
+
 .qool-verb,
-.qool-more,
+.qool-more-switch,
 .qool-more-expanse {
     display: block;
     float: right;
@@ -46,7 +54,6 @@
     /*z-index: 5;*/
     /*position: relative;*/
 /*}*/
-
 /*.qool-verb.ui-draggable-dragging,*/
 /*.qool-verb.ui-draggable-dragging img,*/
 /*.dragging,*/
@@ -58,22 +65,23 @@
     /*SEE:  http://stackoverflow.com/questions/5217311/setting-z-index-on-draggable-elements*/
 /*}*/
 
-.qool-more {
+.qool-more-switch {
     margin-top: 4px;
     margin-bottom: 4px;
-    /* NOTE:  More for Firefox, which smooshes qool-more into qool-more-expanse */
+    /* NOTE:  Margins for Firefox, which smooshes div.qool-more-switch into div.qool-more-expanse */
     width: 16px;
     height: 16px;
     text-align: center;
-    cursor: default;
+    cursor: pointer;   /* pointing finger */
 }
 
-.qool-more-hide {
+.qoolbar:not(.qool-more-expand) .qool-more-expanse {
     display: none;
 }
 
 #qool-new-verb {
     width: 5em;
+    text-align: right;
 }
 
 
@@ -81,7 +89,7 @@
 /* THANKS:  http://stackoverflow.com/a/5640854/673991 */
 
 /*noinspection CssUnknownProperty*/
-.fade_until_hover {
+.fade_until_hover:not(.qool-more-expand) {
     -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=50)"; /* IE 8 */
         filter:                                    alpha(opacity=50);  /* IE 5-7 */
                                                -khtml-opacity: 0.50;   /* Safari 1.x */
@@ -98,6 +106,24 @@
                                                        opacity: 1.00;   /* Good browsers */
 }
 
+.qoolbar:not(.qool-more-expand) .hide_until_hover {
+    display:none;
+}
+.qoolbar:hover .hide_until_hover {
+    display:inline;
+}
+
+.qoolbar                  .hide_until_more {
+    display:none;
+}
+.qoolbar.qool-more-expand .hide_until_more {
+    display:inline;
+}
+
+.verb-deletion {
+    cursor: pointer;  /* pointing finger */
+}
+
 .drop-hover {
     background-color: white;
 }
@@ -106,6 +132,7 @@
     margin: -5px 1px -5px 1px;
     position: relative;
     top: -2px;
+    left: 0;
 }
 .icon-sup,
 .icon-sub {
