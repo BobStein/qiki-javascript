@@ -147,7 +147,8 @@
             {
                 vrb_txt: 'iconify',
                 obj_idn: qool_verb_idn,
-                txt: image_url
+                txt: image_url,
+                use_already: true   // Use an old sentence if same txt and num.
             },
             /**
              * @param response
