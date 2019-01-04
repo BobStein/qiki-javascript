@@ -65,6 +65,11 @@
     /*SEE:  http://stackoverflow.com/questions/5217311/setting-z-index-on-draggable-elements*/
 /*}*/
 
+/*noinspection CssUnknownProperty*/
+.qool-verb.verb-deleted {
+    display: none;
+}
+
 .qool-more-switch {
     margin-top: 4px;
     margin-bottom: 4px;
@@ -191,4 +196,9 @@
     text-align: center;
     vertical-align: 18%;
     display: inline-block;
+}
+
+img.answer-author {
+    width: 1em;
+    height: 1em;
 }

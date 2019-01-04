@@ -24,7 +24,7 @@
      * @param built_callback -  _verb_dicts are ready.  Time to qoolbar.bling the qool targets.
      */
     qoolbar.html = function qoolbar_html(selector, built_callback) {
-        _post(
+        qoolbar.post(
             'qoolbar_list',
             {},
             /**
@@ -50,18 +50,38 @@
                         }
                     });
                     $('.qoolbar')
-                        .on('mousedown', '.qool-more-switch', function (event) {
+                        .on('mousedown', '.qool-more-switch', function qool_more_click(event) {
                             _qool_more_toggle();
                             event.stopPropagation();   // avoid document click's hide
                             event.preventDefault();
                             // THANKS:  no text select, https://stackoverflow.com/a/43321596/673991
                             //          mousedown-preventDefault avoids double-click
                         })
+                        .on('mousedown', '.verb-deletion', function verb_delete(event) {
+                            var $qool_verb = $(this).closest('.qool-verb');
+                            if ($qool_verb.length === 1) {
+                                var verb_name = $qool_verb.data('verb');
+                                var verb_idn = $qool_verb.data('vrb-idn');
+                                console.debug("Deletion", verb_name, verb_idn);
+                                qoolbar.post(
+                                    'delete_verb',
+                                    {idn: verb_idn},
+                                    function delete_verb_done(response) {
+                                        console.debug("delete verb done", response);
+                                        // TODO:  Remove from qoolbar._verb_dicts, and maybe qoolbar._build()
+                                    }
+                                );
+                            } else {
+                                console.error("Delete not inside a qool verb", $(this));
+                            }
+                            event.stopPropagation();   // avoid document click's hide
+                            event.preventDefault();
+                        })
                         .on('dragover dragleave', '.qool-verb', function (e) {
                             e.stopPropagation();
                             e.preventDefault();
                         })
-                        .on('drop', '.qool-verb', function (e) {
+                        .on('drop', '.qool-verb', function drop_onto_qoolbar_verb(e) {
                             e.stopPropagation();
                             e.preventDefault();
                             var qool_verb_name = $(this).data('verb');
@@ -142,7 +162,7 @@
      * @private
      */
     function _post_icon(qool_verb_idn, image_url) {
-        _post(
+        qoolbar.post(
             'sentence',
             {
                 vrb_txt: 'iconify',
@@ -278,7 +298,7 @@
                 var $destination = $(event.target);
                 var vrb_idn = $source.data('vrb-idn');
                 var destination_idn = $destination.data('idn');
-                _post(
+                qoolbar.post(
                     'sentence',
                     {
                         // vrb_txt: verb_name,   No, this may get a different verb by the same name.  Use idn.
@@ -385,7 +405,7 @@
             var obj_idn = $destination.data('idn');
             console.debug("obj_idn type " + typeof obj_idn);
             // TODO:  Search instead for a class that qoolbar.target() installed?  Better D.R.Y.
-            _post(
+            qoolbar.post(
                 'sentence',
                 {
                     vrb_idn: vrb_idn,
@@ -428,12 +448,13 @@
                 var verb_name = $(this).val();
                 $(this).val("");
                 console.debug(verb_name);
-                _post(
+                qoolbar.post(
                     'new_verb',
                     {name: verb_name},
                     function new_verb_done(response) {
                         console.debug("new verb done", response);
                         // TODO:  Add to qoolbar._verb_dicts, and maybe call qoolbar._build()
+                        //        so we don't have to reload to see the new verb.
                     }
                 );
             }
@@ -448,6 +469,7 @@
      * @param verbs.name -- e.g. 'like'
      * @param verbs.idn
      * @param verbs.icon_url -- from the iconify sentence
+     * @param verbs.qool_num -- 0 if deleted, 1 if not
      * @returns {*|HTMLElement}
      * @private
      */
@@ -461,8 +483,12 @@
             // THANKS:  (avoiding for-in loop on arrays) http://stackoverflow.com/a/3010848/673991
             var verb = verbs[i_verb];
             qoolbar._verb_dicts[verb.idn] = verb;
+            var tool_classes = 'qool-verb qool-verb-' + verb.name;
+            if (verb.qool_num === 0) {
+                tool_classes += ' ' + 'verb-deleted';
+            }
             var $verb_tool = $('<div>', {
-                class: 'qool-verb qool-verb-' + verb.name,
+                class: tool_classes,
                 'data-verb': verb.name,
                 'data-vrb-idn': verb.idn
             });
@@ -478,7 +504,7 @@
         $div.append(
             $('<div>', {
                 class: 'qool-more-switch',
-                title: "more qoolbar options"
+                title: "more options"
             }).html(
                 "&vellip;"
             )
@@ -486,7 +512,7 @@
         $div.append(
             $('<div>', {
                 class: 'qool-more-expanse',   // qool-more-hide'
-                title: "Enter a name to create a verb."
+                title: "Enter a name for a new verb."
             }).append(
                 $('<input>', {
                     id: 'qool-new-verb',
@@ -522,7 +548,7 @@
         }
     }
 
-    function _post(action, variables, callback_done, callback_fail) {
+    qoolbar.post = function qoolbar_post(action, variables, callback_done, callback_fail) {
         var fail_function;
         if (typeof callback_fail === 'undefined') {
             fail_function = function (error_message) {
@@ -540,7 +566,7 @@
         }).fail(function (jqXHR) {
             fail_function(jqXHR.responseText);
         });
-    }
+    };
 
     /**
      * Construct a DOM icon for the verb.
@@ -563,7 +589,7 @@
         return $verb_icon;
     }
 
-    qoolbar.i_am = function (me_idn) {
+    qoolbar.i_am = function qoolbar_i_am(me_idn) {
         qoolbar._me_idn = me_idn;
     };
 
