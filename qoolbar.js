@@ -216,7 +216,8 @@
          *
          * Requirements before calling:
          *     - The elements are expected to already have data-idn and data-jbo attributes.
-         *     - qoolbar.html() has called back, indicating the qoolbar has been built and the qool verbs are known.
+         *     - qoolbar.html() has called back, indicating the qoolbar has been built 
+         *       and the qool verbs are known.
          *
          * data-jbo of the selected object is a JSON of it's qool score histories, e.g.
          * [
@@ -333,6 +334,11 @@
             });
         };
 
+        /**
+         * Click on bling to edit your rating.
+         * 
+         * @param selector - things with bling
+         */
         qoolbar.click_to_edit = function qoolbar_click_to_edit(selector) {
 
             // TODO:  Can we really rely on $(selector) to contain the $(.qool-icon)s?
@@ -447,32 +453,33 @@
                     qoolbar._end_all_editing();
                 }
             });
-            $(window.document).on('click', '.qoolbar', function (event) {
-                console.debug("qoolbar anti click");
-                event.stopPropagation();
-            });
-            console.debug("ready to doc click");
-            $(window.document).on('click', function () {
-                console.debug("doc click");
-                _qool_more_toggle(false);
-            });
-            $(window.document).on('keypress', '#qool-new-verb', function (event) {
-                if (event.keyCode === 13) {
-                    var verb_name = $(this).val();
-                    $(this).val("");
-                    console.debug(verb_name);
-                    qoolbar.post(
-                        'new_verb',
-                        {name: verb_name},
-                        function new_verb_done(response) {
-                            console.debug("new verb done", response);
-                            // TODO:  Add to qoolbar._verb_dicts, and maybe call qoolbar._build()
-                            //        so we don't have to reload to see the new verb.
-                        }
-                    );
-                }
-            });
         };
+        
+        $(window.document).on('click', '.qoolbar', function (event) {
+            console.debug("qoolbar anti click");
+            event.stopPropagation();
+        });
+        console.debug("ready to doc click");
+        $(window.document).on('click', function () {
+            console.debug("doc click");
+            _qool_more_toggle(false);
+        });
+        $(window.document).on('keypress', '#qool-new-verb', function (event) {
+            if (event.keyCode === 13) {
+                var verb_name = $(this).val();
+                $(this).val("");
+                console.debug(verb_name);
+                qoolbar.post(
+                    'new_verb',
+                    {name: verb_name},
+                    function new_verb_done(response) {
+                        console.debug("new verb done", response);
+                        // TODO:  Add to qoolbar._verb_dicts, and maybe call qoolbar._build()
+                        //        so we don't have to reload to see the new verb.
+                    }
+                );
+            }
+        });
 
         /**
          * Build the qoolbar DOM given an array of verb names and icons.
