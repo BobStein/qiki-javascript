@@ -548,6 +548,26 @@
         }
     }
 
+    /**
+     * 
+     * action           variables
+     * ------           ---------
+     * 'answer'
+     * 'qoolbar_list'
+     * 'new_verb'
+     * 'delete_verb'    idn: verb_idn
+     * 'sentence'       vrb_txt: string,
+     * 'sentence'       vrb_idn: q-string,
+                        obj_idn: q-string,
+                        txt: string
+                        use_already: bool    Use an old sentence if same txt and num.
+
+     *                
+     * @param action 
+     * @param variables
+     * @param callback_done
+     * @param callback_fail
+     */
     qoolbar.post = function qoolbar_post(action, variables, callback_done, callback_fail) {
         var fail_function;
         if (typeof callback_fail === 'undefined') {
