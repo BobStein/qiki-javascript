@@ -57,10 +57,10 @@
                         $('.qoolbar')
                             .on('mousedown', '.qool-more-switch', function qool_more_click(event) {
                                 _qool_more_toggle();
-                                event.stopPropagation();   // avoid document click's hide
+                                event.stopPropagation();   // avoid document click's hiding of qool-more
                                 event.preventDefault();
                                 // THANKS:  no text select, https://stackoverflow.com/a/43321596/673991
-                                //          mousedown-preventDefault avoids double-click
+                                //          mousedown preventDefault avoids double-click
                             })
                             .on('mousedown', '.verb-deletion', function verb_delete(event) {
                                 var $qool_verb = $(this).closest('.qool-verb');
@@ -335,9 +335,15 @@
 
         qoolbar.click_to_edit = function qoolbar_click_to_edit(selector) {
 
-            // TODO:  Can we really rely on $(selector) to contain the $(.qool-icon)s?  Seriously not D.R.Y.
-            // Because that containment is expressed in word-diagram-call.html --> icon_diagram --> playground_extras.py --> icon-diagram-call.html
-            // Is the solution to develop a REST-full API??
+            // TODO:  Can we really rely on $(selector) to contain the $(.qool-icon)s?
+            //        Seriously not D.R.Y.
+            //        Because that containment is expressed in
+            //            word-diagram-call.html
+            //            --> icon_diagram
+            //            --> playground_extras.py
+            //            --> icon-diagram-call.html
+            //        Is the solution to develop a REST-full API??
+            //        (WTF DOES THIS MEAN? Is this vestigial?)
 
             //noinspection JSJQueryEfficiency
             $(selector).on('mousedown', '.qool-icon', function () {
@@ -345,10 +351,9 @@
                 $(this).data('was_already_editing', was_already_editing);
             });
 
-            // Blur, if it happens, will come between mousedown and click events.
-            // THANKS:  http://stackoverflow.com/a/10653160/673991
+            // THANKS:  mousedown before blur, http://stackoverflow.com/a/10653160/673991
+            //          then after blur (if any) comes click
 
-            //noinspection JSJQueryEfficiency
             $(selector).on('click', '.qool-icon', function (event) {
                 // TODO:  Shouldn't selector events be bound in qoolbar.target()??
                 var $qool_icon = $(this);
@@ -443,8 +448,10 @@
                 }
             });
             $(window.document).on('click', '.qoolbar', function (event) {
+                console.debug("qoolbar anti click");
                 event.stopPropagation();
             });
+            console.debug("ready to doc click");
             $(window.document).on('click', function () {
                 console.debug("doc click");
                 _qool_more_toggle(false);
