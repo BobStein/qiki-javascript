@@ -7,8 +7,8 @@
     }
    if (typeof $ !== 'function') {
         console.error("The qoolbar.js module requires jQuery.");
-    // } else if (typeof $.ui === 'undefined') {
-    //     console.error("The qoolbar.js module requires jQuery UI.");
+    } else if (typeof $.ui === 'undefined') {
+        console.error("The qoolbar.js module requires jQuery UI.");
     }
     qoolbar.is_ready = false;
 
