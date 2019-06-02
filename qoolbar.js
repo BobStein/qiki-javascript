@@ -538,7 +538,14 @@
                 )
             );
             qool_more_toggle(false);
-            console.log('_verb_dicts', qoolbar._verb_dicts);
+            // console.log('_verb_dicts', qoolbar._verb_dicts)
+            // EXAMPLE: _verb_dicts {
+            //      0q82_86: {qool_num: 1, icon_url: "http://.../thumbsup_16.png", name: "like", idn: "0q82_86"}
+            //      0q82_89: {qool_num: 1, icon_url: "http://.../delete_16.png", name: "delete", idn: "0q82_89"}
+            //      0q83_01FC: {qool_num: 0, icon_url: "data:image/png;base64,iVB...mCC", name: "laugh", idn: "0q83_01FC"}
+            //      0q83_0301: {qool_num: 1, icon_url: "data:image/png;base64,iVB...g==", name: "spam", idn: "0q83_0301"}
+            //      0q83_0335: {qool_num: 1, icon_url: "data:image/png;base64,iVB...II=", name: "laugh", idn: "0q83_0335"}
+            // }
             return $div;
         }
 
