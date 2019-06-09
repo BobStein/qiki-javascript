@@ -30,7 +30,7 @@
 }
 
 .qool-verb {   /* in the qoolbar */
-    cursor: move;   /* draggable */
+    /*cursor: move;   !* draggable *!*/
 }
 
 .qool-icon {   /* decorating a target (a word-associated thingie) */

@@ -49,6 +49,8 @@
                             cursor: '-moz-grabbing',
                             // TODO:  grabby cursor?  -webkit-grab?  move?  http://stackoverflow.com/a/26811031/673991
                             scroll: false,
+                            appendTo: 'body',
+                            // THANKS:  helper-clone on top, https://stackoverflow.com/q/17977799/673991
                             start: function () {
                                 association_in_progress();
                             },
