@@ -23,9 +23,88 @@
     $(window.document).ready(function () {
 
         /**
-         * Generate the qoolbar.
+         * Build the qoolbar DOM given an array of verb names and icons.
          *
-         * Typically called from $(document).ready(function() { ... });
+         * @param verbs[]
+         * @param verbs.length
+         * @param verbs.name -- e.g. 'like'
+         * @param verbs.idn
+         * @param verbs.icon_url -- from the iconify sentence
+         * @param verbs.qool_num -- 0 if deleted, 1 if not
+         * @returns {*|HTMLElement}
+         * @private
+         */
+        // NOTE:  Why does verbs.name work and not verbs[].name?
+        //        http://usejsdoc.org/tags-param.html#parameters-with-properties
+        function qoolbar_build(verbs) {
+            qoolbar._verb_dicts = {};
+            var $qoolbar = $('<div>', {'class': 'qoolbar fade_until_hover'});
+            var $qoolbar_head = $('<div>', {
+                'class': 'qoolbar-head qool-more-expanse',
+                'title': "This is the qiki toolbar. Drag tools onto the page."
+            }).text("qoolbar");
+            var $qoolbar_body = $('<div>', {'class': 'qoolbar-body'});
+            $qoolbar.append($qoolbar_head);
+            $qoolbar.append($qoolbar_body);
+            var num_verbs = verbs.length;
+            for (var i_verb=0 ; i_verb < num_verbs ; i_verb++) {
+                // THANKS:  (avoiding for-in loop on arrays) http://stackoverflow.com/a/3010848/673991
+                var verb = verbs[i_verb];
+                qoolbar._verb_dicts[verb.idn] = verb;
+                var tool_classes = 'qool-verb qool-verb-' + verb.name;
+                if (verb.qool_num === 0) {
+                    tool_classes += ' ' + 'verb-deleted';
+                }
+                var $verb_tool = $('<div>', {
+                    'class': tool_classes,
+                    'data-verb': verb.name,
+                    'data-vrb-idn': verb.idn
+                });
+                $verb_tool.append(verb_icon(verb));
+                var $verb_delete = $('<span>', {
+                    'class': 'verb-deletion hide_until_more',
+                    'title': "remove '" + verb.name + "' from your qoolbar"
+                }).text(UNICODE_TIMES);
+                $verb_tool.prepend($verb_delete);
+                $qoolbar_body.append($verb_tool);
+            }
+            // noinspection RequiredAttributes
+            $qoolbar_body.append(
+                $('<div>', {
+                    'class': 'qool-more-switch',
+                    'title': "more options"
+                }).html(
+                    "&vellip;"
+                )
+            );
+            $qoolbar_body.append(
+                $('<div>', {
+                    'class': 'qool-more-foot qool-more-expanse',
+                    'title': "Enter a name for a new verb."
+                }).append(
+                    $('<input>', {
+                        id: 'qool-new-verb',
+                        type: 'text',
+                        placeholder: "new verb"
+                    })
+                )
+            );
+            qool_more_toggle(false);
+            // console.log('_verb_dicts', qoolbar._verb_dicts)
+            // EXAMPLE: _verb_dicts {
+            //      0q82_86: {qool_num: 1, icon_url: "http://.../thumbsup_16.png", name: "like", idn: "0q82_86"}
+            //      0q82_89: {qool_num: 1, icon_url: "http://.../delete_16.png", name: "delete", idn: "0q82_89"}
+            //      0q83_01FC: {qool_num: 0, icon_url: "data:image/png;base64,iVB...mCC", name: "laugh", idn: "0q83_01FC"}
+            //      0q83_0301: {qool_num: 1, icon_url: "data:image/png;base64,iVB...g==", name: "spam", idn: "0q83_0301"}
+            //      0q83_0335: {qool_num: 1, icon_url: "data:image/png;base64,iVB...II=", name: "laugh", idn: "0q83_0335"}
+            // }
+            return $qoolbar;
+        }
+
+        /**
+         * Get the list of qool verbs from the lex.  Build the qoolbar and stick them in there.
+         *
+         * Should be called from application inside $(document).ready(function() { ... });
          *
          * @param selector - empty div wherein to place it.
          * @param built_callback -  _verb_dicts are ready.  Time to qoolbar.bling the qool targets.
@@ -251,7 +330,7 @@
                                 .addClass('icon-sup')
                                 .text(str(score.my));
                             var $everybody_score = $('<span>', {
-                                class: 'icon-sub'
+                                'class': 'icon-sub'
                             }).text(score.sum.toString());
                             var $icon_bling = $('<span>')
                                 .addClass('icon-bling')
@@ -269,7 +348,7 @@
                         }
                     }
                 }
-                var $bling = $('<span>', {class: 'qool-bling'});
+                var $bling = $('<span>', {'class': 'qool-bling'});
                 $bling.append(verb_widgets);
                 $(this).children('.qool-bling').remove();   // remove old bling
                 $(this).append($bling)
@@ -379,7 +458,7 @@
                         type: 'text',
                         // TODO:  IE7 needs type in definition
                         // SEE:  http://stackoverflow.com/questions/9898442/jquery-create-element-with-attribute-differences
-                        class: 'qool-icon-entry',
+                        'class': 'qool-icon-entry',
                         value: old_num
                     });
                     $qool_icon.find('.icon-bling').append($input);
@@ -479,78 +558,6 @@
             }
         });
 
-        /**
-         * Build the qoolbar DOM given an array of verb names and icons.
-         *
-         * @param verbs[]
-         * @param verbs.length
-         * @param verbs.name -- e.g. 'like'
-         * @param verbs.idn
-         * @param verbs.icon_url -- from the iconify sentence
-         * @param verbs.qool_num -- 0 if deleted, 1 if not
-         * @returns {*|HTMLElement}
-         * @private
-         */
-        // NOTE:  Why does verbs.name work and not verbs[].name?
-        //        http://usejsdoc.org/tags-param.html#parameters-with-properties
-        function qoolbar_build(verbs) {
-            qoolbar._verb_dicts = {};
-            var $div = $('<div>', {class: 'qoolbar fade_until_hover'});
-            var num_verbs = verbs.length;
-            for (var i_verb=0 ; i_verb < num_verbs ; i_verb++) {
-                // THANKS:  (avoiding for-in loop on arrays) http://stackoverflow.com/a/3010848/673991
-                var verb = verbs[i_verb];
-                qoolbar._verb_dicts[verb.idn] = verb;
-                var tool_classes = 'qool-verb qool-verb-' + verb.name;
-                if (verb.qool_num === 0) {
-                    tool_classes += ' ' + 'verb-deleted';
-                }
-                var $verb_tool = $('<div>', {
-                    class: tool_classes,
-                    'data-verb': verb.name,
-                    'data-vrb-idn': verb.idn
-                });
-                $verb_tool.append(verb_icon(verb));
-                var $verb_delete = $('<span>', {
-                    class: 'verb-deletion hide_until_more',
-                    title: "remove '" + verb.name + "' from your qoolbar"
-                }).text(UNICODE_TIMES);
-                $verb_tool.prepend($verb_delete);
-                $div.append($verb_tool);
-            }
-            // noinspection RequiredAttributes
-            $div.append(
-                $('<div>', {
-                    class: 'qool-more-switch',
-                    title: "more options"
-                }).html(
-                    "&vellip;"
-                )
-            );
-            $div.append(
-                $('<div>', {
-                    class: 'qool-more-expanse',   // qool-more-hide'
-                    title: "Enter a name for a new verb."
-                }).append(
-                    $('<input>', {
-                        id: 'qool-new-verb',
-                        type: 'text',
-                        placeholder: "new verb"
-                    })
-                )
-            );
-            qool_more_toggle(false);
-            // console.log('_verb_dicts', qoolbar._verb_dicts)
-            // EXAMPLE: _verb_dicts {
-            //      0q82_86: {qool_num: 1, icon_url: "http://.../thumbsup_16.png", name: "like", idn: "0q82_86"}
-            //      0q82_89: {qool_num: 1, icon_url: "http://.../delete_16.png", name: "delete", idn: "0q82_89"}
-            //      0q83_01FC: {qool_num: 0, icon_url: "data:image/png;base64,iVB...mCC", name: "laugh", idn: "0q83_01FC"}
-            //      0q83_0301: {qool_num: 1, icon_url: "data:image/png;base64,iVB...g==", name: "spam", idn: "0q83_0301"}
-            //      0q83_0335: {qool_num: 1, icon_url: "data:image/png;base64,iVB...II=", name: "laugh", idn: "0q83_0335"}
-            // }
-            return $div;
-        }
-
         function qool_more_toggle(do_expand) {
             $('.qoolbar').toggleClass('qool-more-expand', do_expand);
         }
@@ -638,7 +645,7 @@
             var $verb_icon;
             if (verb.icon_url === null) {
                 var cap_first_letter = verb.name.charAt(0).toUpperCase();
-                $verb_icon = $('<div>', {class: 'letter-icon', title: verb.name}).text(cap_first_letter);
+                $verb_icon = $('<div>', {'class': 'letter-icon', title: verb.name}).text(cap_first_letter);
             } else {
                 // noinspection RequiredAttributes, HtmlRequiredAltAttribute
                 $verb_icon = $('<img>', {src: verb.icon_url, title: verb.name});

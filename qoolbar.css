@@ -8,7 +8,6 @@
 }
 
 
-/*noinspection CssUnknownProperty,CssOptimizeSimilarProperties*/
 .qoolbar {
     display: block;
     position: fixed;
@@ -18,15 +17,43 @@
     border-width: 1px 0 1px 1px;
     border-color: #CCCCCC;
     background-color: #EEEEEE;
-    padding: 3px;
+}
+
+/*noinspection CssUnknownProperty,CssOptimizeSimilarProperties*/
+.qoolbar,
+.qoolbar-head {
     -webkit-border-top-left-radius: 8px;
       -khtml-border-radius-topleft: 8px;
         -moz-border-radius-topleft: 8px;
             border-top-left-radius: 8px;
+}
+
+/*noinspection CssUnknownProperty,CssOptimizeSimilarProperties*/
+.qoolbar,
+.qoolbar-body {
     -webkit-border-bottom-left-radius: 8px;
       -khtml-border-radius-bottomleft: 8px;
         -moz-border-radius-bottomleft: 8px;
             border-bottom-left-radius: 8px;
+}
+
+.qoolbar.qool-more-expand {
+    margin-top: -18px;
+}
+.qoolbar-head {
+    font: small-caption;
+    text-align: right;
+    height: 18px;
+    width: 100%;
+    padding: 0 3px 0 0;
+    background-color: #CCCCCC;
+}
+.qoolbar-body {
+    padding: 3px 3px 3px 3px;
+    overflow-y: auto;
+    /* THANKS:  qoolbar-body height 0 otherwise, https://stackoverflow.com/a/19354885/673991
+                This also seemed to make the whole qoolbar too wide,
+                but that was when the qoolbar-head was float. */
 }
 
 .qool-verb {   /* in the qoolbar */
@@ -39,11 +66,12 @@
 
 .qool-verb,
 .qool-more-switch,
-.qool-more-expanse {
+.qool-more-foot {
     display: block;
     float: right;
     clear: both;
-    text-align: center;
+    /*text-align: center;*/
+
     /*position: relative;*/
     /*top: 0;*/
     /*left: 0;*/
