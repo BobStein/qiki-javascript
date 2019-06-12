@@ -20,6 +20,7 @@
     qoolbar.ICON_ENTRY_TOP_FUDGE = -3;   // Correspond to bottom padding and margin
     qoolbar.ICON_ENTRY_LEFT_FUDGE = 1;   // Correspond to left padding and margin
     var UNICODE_TIMES = '\u00D7';   // aka &times;
+
     $(window.document).ready(function () {
 
         /**
@@ -135,7 +136,11 @@
                             // console.log("bling", vrb, verb_dict);
                             // EXAMPLE:  0q82_86 {idn: "0q82_86", icon_url: "http://tool.qiki.info/icon/thumbsup_16.png", name: "like"}
                             var $verb_icon = verb_icon(verb_dict);
-                            $verb_icon.attr('title', verb_dict.name + ": " + score.history.join("-"));
+                            safe_set_attr(
+                                $verb_icon,
+                                'title',
+                                verb_dict.name + ": " + score.history.join("-")
+                            );
                             var $my_score = $('<span>')
                                 .addClass('icon-sup')
                                 .text(str(score.my));
@@ -168,12 +173,14 @@
                                 //        Maybe I should NEVER show author deletions to non-authors,
                                 //        even when the box IS checked.
                                 var data_name_me = 'data-qool-' + verb_dict.name + '-me';
-                                $element.attr(data_name_me, score.my);
+                                // $element.attr(data_name_me, score.my);
+                                safe_set_attr($element, data_name_me, score.my)
                             }
                             var score_they = score.sum - score.my;
                             if (score_they !== 0) {
                                 var data_name_they = 'data-qool-' + verb_dict.name + '-they';
-                                $element.attr(data_name_they, score_they);
+                                // $element.attr(data_name_they, score_they);
+                                safe_set_attr($element, data_name_they, score_they);
                             }
                         } else {
                             console.warn("Verb", vrb, "not in qoolbar");
@@ -186,6 +193,38 @@
                 $element.append($bling)
             });
         };
+
+        function safe_set_attr(element, attr_name, attr_value) {
+            // TODO:  Test and use for attr GETTING too.
+            var return_value = null;
+            try {
+                return_value = $(element).attr(attr_name, attr_value);
+            } catch (e) {
+                try {
+                    return_value = $(element).attr(attr_name, "(error)");
+                    console.warn(
+                        ".attr() can't set",
+                        attr_name.toString(),
+                        "to",
+                        attr_value.toString(),
+                        "because:\n",
+                        e.message
+                    );
+                } catch (ee) {
+                    try {
+                        console.warn(
+                            ".attr() cannot set",
+                            attr_name.toString(),
+                            "at all, because:\n",
+                            ee.message
+                        );
+                    } catch (eee) {
+                        console.error(".attr() meltdown, type", typeof attr_name, eee.message);
+                    }
+                }
+            }
+            return return_value;
+        }
 
         /**
          * Get the list of qool verbs from the lex.  Build the qoolbar and stick them in there.
