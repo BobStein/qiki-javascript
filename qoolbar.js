@@ -23,7 +23,7 @@
     $(window.document).ready(function () {
 
         /**
-         * Build the qoolbar DOM given an array of verb names and icons.
+         * Build the qoolbar DOM, given an array of verb names and icons.
          *
          * @param verbs[]
          * @param verbs.length
@@ -41,7 +41,7 @@
             var $qoolbar = $('<div>', {'class': 'qoolbar fade_until_hover'});
             var $qoolbar_head = $('<div>', {
                 'class': 'qoolbar-head qool-more-expanse',
-                'title': "This is the qiki toolbar. Drag tools onto the page."
+                'title': "This is your qoolbar. Drag these verbs onto the page."
             }).text("qoolbar");
             var $qoolbar_body = $('<div>', {'class': 'qoolbar-body'});
             $qoolbar.append($qoolbar_head);
@@ -100,6 +100,92 @@
             // }
             return $qoolbar;
         }
+
+        /**
+         * Decorate qiki-word-associated elements with their verbs and scores.
+         *
+         * Requirements before calling:
+         *     - The elements are expected to already have data-idn and data-jbo attributes.
+         *     - qoolbar.html() has finished (its built_callback was called),
+         *       indicating the qoolbar elements have been constructed and
+         *       and qoolbar._verb_dicts[] is populated.
+         *
+         * data-jbo of the selected object is a JSON of it's qool score histories, e.g.
+         * [
+         *     {"sbj": "0q82_A7__8A059E058E6A6308C8B0_1D0B00", "vrb": "0q82_86", "txt": "", "num": 1, "idn": "0q83_0188"},
+         *     {"sbj": "0q82_A7__8A059E058E6A6308C8B0_1D0B00", "vrb": "0q82_86", "txt": "", "num": 2, "idn": "0q83_01CD"},
+         *     {"sbj": "0q82_A7__8A059E058E6A6308C8B0_1D0B00", "vrb": "0q82_86", "txt": "", "num": 3, "idn": "0q83_01D1"},
+         *     {"sbj": "0q82_A7__8A059E058E6A6308C8B0_1D0B00", "vrb": "0q82_86", "txt": "", "num": 4, "idn": "0q83_01FA"}
+         * ]
+         *
+         * Append the qoolbar icons that have been applied to them, based on their data-jbo.
+         * @param selector
+         */
+        qoolbar.bling = function qoolbar_bling(selector) {
+            $(selector).each(function () {
+                var $element = $(this);
+                var jbo = $element.data('jbo');
+                var scores = scorer(jbo);
+                var verb_widgets = [];
+                for (var vrb in scores) {
+                    if (scores.hasOwnProperty(vrb)) {
+                        var score = scores[vrb];
+                        if (qoolbar._verb_dicts.hasOwnProperty(vrb)) {
+                            var verb_dict = qoolbar._verb_dicts[vrb];
+                            // console.log("bling", vrb, verb_dict);
+                            // EXAMPLE:  0q82_86 {idn: "0q82_86", icon_url: "http://tool.qiki.info/icon/thumbsup_16.png", name: "like"}
+                            var $verb_icon = verb_icon(verb_dict);
+                            $verb_icon.attr('title', verb_dict.name + ": " + score.history.join("-"));
+                            var $my_score = $('<span>')
+                                .addClass('icon-sup')
+                                .text(str(score.my));
+                            var $everybody_score = $('<span>', {
+                                'class': 'icon-sub'
+                            }).text(score.sum.toString());
+                            var $icon_bling = $('<span>')
+                                .addClass('icon-bling')
+                                .append($my_score)
+                                .append($everybody_score);
+                            var $verb = $('<span>')
+                                .addClass('qool-icon')
+                                .data('num', score.my)   // Never shows up as data-num attribute, unfortunately.
+                                .data('vrb-idn', vrb)
+                                .append($verb_icon)
+                                .append($icon_bling);
+                            verb_widgets.push($verb);
+                            if (score.my !== 0) {
+                                // TODO:  Resolve whether to do this with deleted verbs.
+                                //        E.g. if a user deletes the delete verb (red x),
+                                //        Should his up-to-then deleted objects remain deleted forever?
+                                //        Or should his notion of deletion itself be deleted,
+                                //        thereby mass-undeleting??  Prolly not that...
+
+                                // TODO:  If "deleted" is unchecked, I need to hide both
+                                //        - what the viewer has deleted
+                                //        - what the AUTHOR has deleted
+                                //        but ignore any deletions by non-authors (who are not me)
+                                //        this calls out for a bot!
+                                //        Maybe I should NEVER show author deletions to non-authors,
+                                //        even when the box IS checked.
+                                var data_name_me = 'data-qool-' + verb_dict.name + '-me';
+                                $element.attr(data_name_me, score.my);
+                            }
+                            var score_they = score.sum - score.my;
+                            if (score_they !== 0) {
+                                var data_name_they = 'data-qool-' + verb_dict.name + '-they';
+                                $element.attr(data_name_they, score_they);
+                            }
+                        } else {
+                            console.warn("Verb", vrb, "not in qoolbar");
+                        }
+                    }
+                }
+                var $bling = $('<span>', {'class': 'qool-bling'});
+                $bling.append(verb_widgets);
+                $element.children('.qool-bling').remove();   // remove old bling
+                $element.append($bling)
+            });
+        };
 
         /**
          * Get the list of qool verbs from the lex.  Build the qoolbar and stick them in there.
@@ -294,68 +380,6 @@
         }
 
         /**
-         * Decorate word-associated elements with the verbs and scores they've received in the past.
-         *
-         * Requirements before calling:
-         *     - The elements are expected to already have data-idn and data-jbo attributes.
-         *     - qoolbar.html() has called back, indicating the qoolbar has been built 
-         *       and the qool verbs are known.
-         *
-         * data-jbo of the selected object is a JSON of it's qool score histories, e.g.
-         * [
-         *     {"sbj": "0q82_A7__8A059E058E6A6308C8B0_1D0B00", "vrb": "0q82_86", "txt": "", "num": 1, "idn": "0q83_0188"},
-         *     {"sbj": "0q82_A7__8A059E058E6A6308C8B0_1D0B00", "vrb": "0q82_86", "txt": "", "num": 2, "idn": "0q83_01CD"},
-         *     {"sbj": "0q82_A7__8A059E058E6A6308C8B0_1D0B00", "vrb": "0q82_86", "txt": "", "num": 3, "idn": "0q83_01D1"},
-         *     {"sbj": "0q82_A7__8A059E058E6A6308C8B0_1D0B00", "vrb": "0q82_86", "txt": "", "num": 4, "idn": "0q83_01FA"}
-         * ]
-         *
-         * Append the qoolbar icons that have been applied to them, based on their data-jbo.
-         * @param selector
-         */
-        qoolbar.bling = function qoolbar_bling(selector) {
-            $(selector).each(function () {
-                var jbo = $(this).data('jbo');
-                var scores = scorer(jbo);
-                var verb_widgets = [];
-                for (var vrb in scores) {
-                    if (scores.hasOwnProperty(vrb)) {
-                        var score = scores[vrb];
-                        if (qoolbar._verb_dicts.hasOwnProperty(vrb)) {
-                            var verb_dict = qoolbar._verb_dicts[vrb];
-                            // console.log("bling", vrb, verb_dict);
-                            // EXAMPLE:  0q82_86 {idn: "0q82_86", icon_url: "http://tool.qiki.info/icon/thumbsup_16.png", name: "like"}
-                            var $verb_icon = verb_icon(verb_dict);
-                            $verb_icon.attr('title', verb_dict.name + ": " + score.history.join("-"));
-                            var $my_score = $('<span>')
-                                .addClass('icon-sup')
-                                .text(str(score.my));
-                            var $everybody_score = $('<span>', {
-                                'class': 'icon-sub'
-                            }).text(score.sum.toString());
-                            var $icon_bling = $('<span>')
-                                .addClass('icon-bling')
-                                .append($my_score)
-                                .append($everybody_score);
-                            var $verb = $('<span>')
-                                .addClass('qool-icon')
-                                .data('num', score.my)   // Never shows up as data-num attribute, unfortunately.
-                                .data('vrb-idn', vrb)
-                                .append($verb_icon)
-                                .append($icon_bling);
-                            verb_widgets.push($verb);
-                        } else {
-                            console.warn("Verb", vrb, "not in qoolbar");
-                        }
-                    }
-                }
-                var $bling = $('<span>', {'class': 'qool-bling'});
-                $bling.append(verb_widgets);
-                $(this).children('.qool-bling').remove();   // remove old bling
-                $(this).append($bling)
-            });
-        };
-
-        /**
          * Identify qoolbar drop-targets.
          *
          * If someone drops a qool verb on them in the future, they will become the object of a new qool sentence.
@@ -365,7 +389,7 @@
          *
          * May be called right after calling qoolbar.html().  (No need to wait for its callback.)
          *
-         * @param selector - all elements must have a data-idn attribute.
+         * @param selector - e.g. ".word" - all elements must have a data-idn attribute already.
          */
         qoolbar.target = function qoolbar_target(selector) {
             var $objects = $(selector);
@@ -417,7 +441,7 @@
         };
 
         /**
-         * Click on bling to edit your rating.
+         * Arrange so that clicking on bling allows you to edit your rating.
          * 
          * @param selector - things with bling
          */
