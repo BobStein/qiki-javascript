@@ -533,8 +533,13 @@
                         obj_idn: obj_idn,
                         num: new_num,   // FIXME:  This could be a q-string!  Dangerous??
                         txt: ''   // TODO:  Room for a comment?
+                                  //        Ooh, yes, pop up a box for that too!
+                                  //        Or just allow it after the number!!!
+                                  //        [42 - that's my answer and I'm sticking to it]
+                                  //        So it'd be handy if the input box grew as you typed
+                                  //        even multiple lines!
                     },
-                    function bling_score_done(response) {
+                    function bling_score_change_done(response) {
                         if (response.is_valid) {
                             valid_sentence_response(response, vrb_idn, $destination);
                             end_all_editing();
@@ -597,7 +602,7 @@
             //         $destination.find('.qool-bling').append(response.icon_html)
             //     }
             // } else
-            if (response.hasOwnProperty('jbo')) {
+            if (response.hasOwnProperty('new_words')) {
                 var new_word = $.parseJSON(response.new_words)[0];
                 $destination.data('jbo').push(new_word);
                 qoolbar.bling($destination);
