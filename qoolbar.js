@@ -631,26 +631,20 @@
         }
 
         function valid_sentence_response(response, vrb_idn, $destination) {
-            // var $qool_icon = $destination.find('.qool-icon').filter('[data-vrb-idn="' + vrb_idn + '"]');
-            // if (response.hasOwnProperty('icon_html')) {
-            //     // TODO:  This clause never happens any more, right??
-            //     //        Displaced by qoolbar.bling()?
-            //     if ($qool_icon.length > 0) {
-            //         $qool_icon.replaceWith(response.icon_html)
-            //     } else {
-            //         $destination.find('.qool-bling').append(response.icon_html)
-            //     }
-            // } else
             if (response.hasOwnProperty('new_words')) {
                 var new_word = $.parseJSON(response.new_words)[0];
                 $destination.data('jbo').push(new_word);
                 qoolbar.bling($destination);
             } else {
-                // noinspection JSDeprecatedSymbols
-                window.location.reload(true);
-                // TODO:  Reload Chrome, https://stackoverflow.com/q/10719505/673991
+                qoolbar.page_reload();
             }
         }
+
+        qoolbar.page_reload = function qoolbar_page_reload() {
+            // noinspection JSDeprecatedSymbols
+            window.location.reload(true);
+            // TODO:  Reload Chrome, https://stackoverflow.com/q/10719505/673991
+        };
 
         /**
          *
