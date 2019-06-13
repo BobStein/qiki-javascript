@@ -106,12 +106,14 @@
          * Decorate qiki-word-associated elements with their verbs and scores.
          *
          * Requirements before calling:
-         *     - The elements are expected to already have data-idn and data-jbo attributes.
+         *     - The elements are expected to already have attributes.
+         *           - data-idn - idn qstring of the associated word
+         *           - data-jbo - JSON of array of qoolifying verbs (jQuery .data() makes it an object)
          *     - qoolbar.html() has finished (its built_callback was called),
          *       indicating the qoolbar elements have been constructed and
          *       and qoolbar._verb_dicts[] is populated.
          *
-         * data-jbo of the selected object is a JSON of it's qool score histories, e.g.
+         * data-jbo e.g.
          * [
          *     {"sbj": "0q82_A7__8A059E058E6A6308C8B0_1D0B00", "vrb": "0q82_86", "txt": "", "num": 1, "idn": "0q83_0188"},
          *     {"sbj": "0q82_A7__8A059E058E6A6308C8B0_1D0B00", "vrb": "0q82_86", "txt": "", "num": 2, "idn": "0q83_01CD"},
@@ -126,6 +128,11 @@
             $(selector).each(function () {
                 var $element = $(this);
                 var jbo = $element.data('jbo');
+                if (typeof jbo === 'string') {
+                    console.error("data-jbo not converted, still a string:'" + jbo + "'");
+                    jbo = $.parseJSON(jbo);
+                }
+                console.assert(typeof jbo === 'object', typeof jbo, jbo);
                 var scores = scorer(jbo);
                 var verb_widgets = [];
                 for (var vrb in scores) {
@@ -336,6 +343,7 @@
                                 } else {
                                     var dropped_html = e.originalEvent.dataTransfer.getData("text/html");
                                     var $dropped_container = $('<div>').append(dropped_html);
+                                    // FIXME:  security concerns
                                     var image_url = $dropped_container.find("img").attr('src');
                                     console.log("dropped url", image_url, dropped_html);
                                     // EXAMPLE:  data:image/png
@@ -393,6 +401,7 @@
                     if (response.is_valid) {
                         var new_word = $.parseJSON(response.new_words)[0];
                         console.log("Yay iconify", new_word.idn);
+                        // TODO:  re-bling all words that use qool_verb_idn, or something
                     } else {
                         console.error("post_icon", response.error_message);
                     }
@@ -632,13 +641,22 @@
 
         function valid_sentence_response(response, vrb_idn, $destination) {
             if (response.hasOwnProperty('new_words')) {
-                var new_word = $.parseJSON(response.new_words)[0];
-                $destination.data('jbo').push(new_word);
+                var jbo = $destination.data('jbo');
+                console.assert(typeof jbo === 'object', typeof jbo);
+                var new_words_array = $.parseJSON(response.new_words);
+                var jbo_plus_new = jbo.concat(new_words_array);
+                $destination.data('jbo', jbo_plus_new);
                 qoolbar.bling($destination);
             } else {
                 qoolbar.page_reload();
             }
         }
+        //
+        // function json_concat(ja1, ja2) {
+        //     console.assert(typeof ja1 === 'string');
+        //     console.assert(typeof ja2 === 'string');
+        //     return JSON.stringify($.parseJSON(ja1) + $.parseJSON(ja2));
+        // }
 
         qoolbar.page_reload = function qoolbar_page_reload() {
             // noinspection JSDeprecatedSymbols
@@ -743,7 +761,8 @@
          */
         function scorer(jbo) {
             var scores = {};
-            var jbo_dict = {};
+            var jbo_dict = {};   // 2D array of scores, indexed by verb idn, then subject idn
+            console.assert(typeof jbo === 'object', "Cannot score a " + typeof jbo);
             $.each(jbo, function (_, word) {
                 if (!(word.vrb in scores)) {
                     scores[word.vrb] = {'sum': 0, 'my': null, 'history': []};
