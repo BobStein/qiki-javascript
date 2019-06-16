@@ -130,7 +130,7 @@
                 var jbo = $element.data('jbo');
                 if (typeof jbo === 'string') {
                     console.error("data-jbo not converted, still a string:'" + jbo + "'");
-                    jbo = $.parseJSON(jbo);
+                    jbo = JSON.parse(jbo);
                 }
                 console.assert(typeof jbo === 'object', typeof jbo, jbo);
                 var scores = scorer(jbo);
@@ -399,7 +399,7 @@
                  */
                 function iconify_done(response) {
                     if (response.is_valid) {
-                        var new_word = $.parseJSON(response.new_words)[0];
+                        var new_word = JSON.parse(response.new_words)[0];
                         console.log("Yay iconify", new_word.idn);
                         // TODO:  re-bling all words that use qool_verb_idn, or something
                     } else {
@@ -643,7 +643,7 @@
             if (response.hasOwnProperty('new_words')) {
                 var jbo = $destination.data('jbo');
                 console.assert(typeof jbo === 'object', typeof jbo);
-                var new_words_array = $.parseJSON(response.new_words);
+                var new_words_array = JSON.parse(response.new_words);
                 var jbo_plus_new = jbo.concat(new_words_array);
                 $destination.data('jbo', jbo_plus_new);
                 qoolbar.bling($destination);
@@ -704,7 +704,7 @@
                 qoolbar._ajax_url,
                 variables
             ).done(function post_done(response_body) {
-                var response_object = $.parseJSON(response_body);
+                var response_object = JSON.parse(response_body);
                 response_object.original_json = response_body;
                 callback_done(response_object);
             }).fail(function post_fail(jqXHR) {
