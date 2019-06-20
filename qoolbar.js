@@ -19,7 +19,13 @@
     };
     qoolbar.ICON_ENTRY_TOP_FUDGE = -3;   // Correspond to bottom padding and margin
     qoolbar.ICON_ENTRY_LEFT_FUDGE = 1;   // Correspond to left padding and margin
-    var UNICODE_TIMES = '\u00D7';   // aka &times;
+    var UNICODE = {
+        TIMES:                '\u00D7',   // aka &times;
+        VERTICAL_ELLIPSES:    '\u22EE',   // 3 vertical dots, aka &vellip; &#x022ee; &#8942;
+        EQUIVALENT:           '\u2261',   // 3 horizontal bars, aka &equiv; &#x02261; &#8801;
+        TRIGRAM_FOR_HEAVEN:   '\u2630',  /// 3 horizontal bars
+        TETRAGRAM_FOR_CENTRE: '\ud834\udf06'   // 4 horiz bars --'\u{1d306}' is not supported by IE11
+    };
 
     $(window.document).ready(function () {
 
@@ -65,7 +71,7 @@
                 var $verb_delete = $('<span>', {
                     'class': 'verb-deletion hide_until_more',
                     'title': "remove '" + verb.name + "' from your qoolbar"
-                }).text(UNICODE_TIMES);
+                }).text(UNICODE.TIMES);
                 $verb_tool.prepend($verb_delete);
                 $qoolbar_body.append($verb_tool);
             }
@@ -74,9 +80,10 @@
                 $('<div>', {
                     'class': 'qool-more-switch',
                     'title': "more options"
-                }).html(
-                    "&vellip;"
-                )
+                // }).text(UNICODE.VERTICAL_ELLIPSES)
+                })
+                    .append($('<span>', {'class': 'qool-more-contract'}).text(UNICODE.VERTICAL_ELLIPSES))
+                    .append($('<span>', {'class': 'qool-more-expanse'}).text(UNICODE.TRIGRAM_FOR_HEAVEN))
             );
             $qoolbar_body.append(
                 $('<div>', {

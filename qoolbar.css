@@ -112,6 +112,10 @@
     display: none;
 }
 
+.qoolbar.qool-more-expand .qool-more-contract {
+    display: none;
+}
+
 #qool-new-verb {
     width: 5em;
     text-align: right;
