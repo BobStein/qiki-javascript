@@ -706,7 +706,8 @@
                 fail_function = callback_fail;
             }
             variables.action = action;
-            variables.csrfmiddlewaretoken = $.cookie('csrftoken');
+            // variables.csrfmiddlewaretoken = $.cookie('csrftoken');
+            // NOTE:  Was this ever good for anything?
             $.post(
                 qoolbar._ajax_url,
                 variables
