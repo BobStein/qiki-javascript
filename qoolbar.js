@@ -253,131 +253,123 @@
                 'qoolbar_list',
                 {},
                 /**
+                 *
                  * @param response
-                 * @param response.is_valid -- true or false
                  * @param response.verbs -- (if is_valid) -- qool verbs, see qoolbar_build()
-                 * @param response.error_message -- (if not is_valid)
                  */
                 function qoolbar_list_done(response) {
-                    if (response.is_valid) {
-                        $(selector).append(qoolbar_build(response.verbs));
-                        //noinspection JSUnusedGlobalSymbols,JSValidateTypes
-                        $(selector + ' .qool-verb').draggable({
-                            helper: 'clone',
-                            cursor: '-moz-grabbing',
-                            // TODO:  grabby cursor?  -webkit-grab?  move?  http://stackoverflow.com/a/26811031/673991
-                            scroll: false,
-                            appendTo: 'body',
-                            // THANKS:  helper-clone on top, https://stackoverflow.com/q/17977799/673991
-                            start: function () {
-                                association_in_progress();
-                            },
-                            stop: function () {
-                                association_resolved();
-                            }
-                        });
-                        $('.qoolbar')
-                            .on('mousedown', '.qool-more-switch', function qool_more_click(event) {
-                                qool_more_toggle();
-                                event.stopPropagation();   // avoid document click's hiding of qool-more
-                                event.preventDefault();
-                                // THANKS:  no text select, https://stackoverflow.com/a/43321596/673991
-                                //          mousedown preventDefault avoids double-click
-                            })
-                            .on('mousedown', '.verb-deletion', function verb_delete(event) {
-                                var $qool_verb = $(this).closest('.qool-verb');
-                                if ($qool_verb.length === 1) {
-                                    var verb_idn = $qool_verb.data('vrb-idn');
-                                    qoolbar.post(
-                                        'delete_verb',
-                                        {idn: verb_idn},
-                                        function delete_verb_done(response) {
-                                            console.debug("delete verb done", response);
-                                            // TODO:  Remove from qoolbar._verb_dicts,
-                                            //        and maybe qoolbar_build()
-                                            //        so we don't have to reload.
-                                        }
-                                    );
-                                } else {
-                                    console.error("Delete not inside a qool verb", $(this));
-                                }
-                                event.stopPropagation();   // avoid document click's hide
-                                event.preventDefault();
-                            })
-                            .on('dragover dragleave', '.qool-verb', function (e) {
-                                e.stopPropagation();
-                                e.preventDefault();
-                            })
-                            .on('drop', '.qool-verb', function drop_onto_qoolbar_verb(e) {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                var qool_verb_name = $(this).data('verb');
-                                var qool_verb_idn = $(this).data('vrb-idn');
-                                var files = e.originalEvent.target.files || e.originalEvent.dataTransfer.files;
-                                if (files.length >= 1) {
-                                    var f = files[0];
-                                    console.log("Drop", qool_verb_name, qool_verb_idn, files.length, "files", f.type, f.size);
-                                    if (f.size <= qoolbar.MAX_DROP_FILE_SIZE) {
-                                        var reader = new FileReader();
-                                        /**
-                                         * Read icon image file.
-                                         *
-                                         * @param file_event
-                                         * @param file_event.target
-                                         * @param file_event.target.result
-                                         * @param file_event.target.result[]
-                                         *
-                                         * @property reader
-                                         * @property reader.result
-                                         * @property reader.result[]
-                                         */
-                                        reader.onload = function (file_event) {
-                                            console.log("dropped", file_event.target.result.length, "bytes", file_event.target.result);
-                                            console.log("dropped", reader.result.length, "bytes", reader.result);
-                                            // TODO:  Convert reader.result to data:image
-                                            var data_image = data_image_from(reader.result, files[0].type);
-                                            post_icon(qool_verb_idn, data_image);
-                                        };
-                                        reader.readAsBinaryString(f);
-                                    } else {
-                                        console.warn(
-                                            "File is",
-                                            f.size,
-                                            "bytes, it should be less than",
-                                            qoolbar.MAX_DROP_FILE_SIZE
-                                        );
-                                    }
-                                } else {
-                                    var dropped_html = e.originalEvent.dataTransfer.getData("text/html");
-                                    var $dropped_container = $('<div>').append(dropped_html);
-                                    // FIXME:  security concerns
-                                    var image_url = $dropped_container.find("img").attr('src');
-                                    console.log("dropped url", image_url, dropped_html);
-                                    // EXAMPLE:  data:image/png
-                                    //     data:image/png;base64,iVBORw0KGgo ... ggg==
-                                    //     <img class="irc_mut" alt="Image result for laughing emoji" onload="..."
-                                    //          src="data:image/png;base64,iVB... gg==" width="16" height="16"
-                                    //          style="margin-top: 169px;">
-                                    // EXAMPLE:  https
-                                    //     https://lh4.googleusercontent.com/proxy/pBKC ... -no-nu
-                                    //     <img class="irc_mi" src="https://lh4.googleusercontent.com/proxy/pBKC ... -no-nu"
-                                    //          onload="..." width="16" height="16" style="margin-top: 169px;"
-                                    //          alt="Image result for laughing emoji">
-
-                                    post_icon(qool_verb_idn, image_url);
-
-                                }
-                            })
-                        ;
-                        if (typeof built_callback === 'function') {
-                            built_callback();
+                    $(selector).append(qoolbar_build(response.verbs));
+                    //noinspection JSUnusedGlobalSymbols,JSValidateTypes
+                    $(selector + ' .qool-verb').draggable({
+                        helper: 'clone',
+                        cursor: '-moz-grabbing',
+                        // TODO:  grabby cursor?  -webkit-grab?  move?  http://stackoverflow.com/a/26811031/673991
+                        scroll: false,
+                        appendTo: 'body',
+                        // THANKS:  helper-clone on top, https://stackoverflow.com/q/17977799/673991
+                        start: function () {
+                            association_in_progress();
+                        },
+                        stop: function () {
+                            association_resolved();
                         }
-                    } else {
-                        console.error("qoolbar_list ajax", response.error_message);
+                    });
+                    $('.qoolbar')
+                        .on('mousedown', '.qool-more-switch', function qool_more_click(event) {
+                            qool_more_toggle();
+                            event.stopPropagation();   // avoid document click's hiding of qool-more
+                            event.preventDefault();
+                            // THANKS:  no text select, https://stackoverflow.com/a/43321596/673991
+                            //          mousedown preventDefault avoids double-click
+                        })
+                        .on('mousedown', '.verb-deletion', function verb_delete(event) {
+                            var $qool_verb = $(this).closest('.qool-verb');
+                            if ($qool_verb.length === 1) {
+                                var verb_idn = $qool_verb.data('vrb-idn');
+                                qoolbar.post(
+                                    'delete_verb',
+                                    {idn: verb_idn},
+                                    function delete_verb_done(response) {
+                                        console.debug("delete verb done", response);
+                                        // TODO:  Remove from qoolbar._verb_dicts,
+                                        //        and maybe qoolbar_build()
+                                        //        so we don't have to reload.
+                                    }
+                                );
+                            } else {
+                                console.error("Delete not inside a qool verb", $(this));
+                            }
+                            event.stopPropagation();   // avoid document click's hide
+                            event.preventDefault();
+                        })
+                        .on('dragover dragleave', '.qool-verb', function (e) {
+                            e.stopPropagation();
+                            e.preventDefault();
+                        })
+                        .on('drop', '.qool-verb', function drop_onto_qoolbar_verb(e) {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            var qool_verb_name = $(this).data('verb');
+                            var qool_verb_idn = $(this).data('vrb-idn');
+                            var files = e.originalEvent.target.files || e.originalEvent.dataTransfer.files;
+                            if (files.length >= 1) {
+                                var f = files[0];
+                                console.log("Drop", qool_verb_name, qool_verb_idn, files.length, "files", f.type, f.size);
+                                if (f.size <= qoolbar.MAX_DROP_FILE_SIZE) {
+                                    var reader = new FileReader();
+                                    /**
+                                     * Read icon image file.
+                                     *
+                                     * @param file_event
+                                     * @param file_event.target
+                                     * @param file_event.target.result
+                                     * @param file_event.target.result[]
+                                     *
+                                     * @property reader
+                                     * @property reader.result
+                                     * @property reader.result[]
+                                     */
+                                    reader.onload = function (file_event) {
+                                        console.log("dropped", file_event.target.result.length, "bytes", file_event.target.result);
+                                        console.log("dropped", reader.result.length, "bytes", reader.result);
+                                        // TODO:  Convert reader.result to data:image
+                                        var data_image = data_image_from(reader.result, files[0].type);
+                                        post_icon(qool_verb_idn, data_image);
+                                    };
+                                    reader.readAsBinaryString(f);
+                                } else {
+                                    console.warn(
+                                        "File is",
+                                        f.size,
+                                        "bytes, it should be less than",
+                                        qoolbar.MAX_DROP_FILE_SIZE
+                                    );
+                                }
+                            } else {
+                                var dropped_html = e.originalEvent.dataTransfer.getData("text/html");
+                                var $dropped_container = $('<div>').append(dropped_html);
+                                // FIXME:  security concerns
+                                var image_url = $dropped_container.find("img").attr('src');
+                                console.log("dropped url", image_url, dropped_html);
+                                // EXAMPLE:  data:image/png
+                                //     data:image/png;base64,iVBORw0KGgo ... ggg==
+                                //     <img class="irc_mut" alt="Image result for laughing emoji" onload="..."
+                                //          src="data:image/png;base64,iVB... gg==" width="16" height="16"
+                                //          style="margin-top: 169px;">
+                                // EXAMPLE:  https
+                                //     https://lh4.googleusercontent.com/proxy/pBKC ... -no-nu
+                                //     <img class="irc_mi" src="https://lh4.googleusercontent.com/proxy/pBKC ... -no-nu"
+                                //          onload="..." width="16" height="16" style="margin-top: 169px;"
+                                //          alt="Image result for laughing emoji">
+
+                                post_icon(qool_verb_idn, image_url);
+
+                            }
+                        })
+                    ;
+                    if (typeof built_callback === 'function') {
+                        built_callback();
                     }
-                },
-                function (error_message) {
-                    console.error("qoolbar_list post", error_message);
                 }
             );
         };
@@ -390,8 +382,7 @@
          * @private
          */
         function post_icon(qool_verb_idn, image_url) {
-            qoolbar.post(
-                'sentence',
+            qoolbar.sentence(
                 {
                     vrb_txt: 'iconify',
                     obj_idn: qool_verb_idn,
@@ -399,19 +390,11 @@
                     use_already: true   // Use an old sentence if same txt and num.
                 },
                 /**
-                 * @param response
-                 * @param response.is_valid -- all good?
-                 * @param response.new_words -- (if valid) json array of words to add to data-jbo.
-                 * @param response.error_message (if not valid)
+                 * @param new_word
                  */
-                function iconify_done(response) {
-                    if (response.is_valid) {
-                        var new_word = JSON.parse(response.new_words)[0];
-                        console.log("Yay iconify", new_word.idn);
-                        // TODO:  re-bling all words that use qool_verb_idn, or something
-                    } else {
-                        console.error("post_icon", response.error_message);
-                    }
+                function iconify_done(new_word) {
+                    console.log("Yay iconify", new_word.idn);
+                    // TODO:  re-bling all words that use qool_verb_idn, or something
                 }
             );
         }
@@ -466,8 +449,7 @@
                     var $destination = $(event.target);
                     var vrb_idn = $source.data('vrb-idn');
                     var destination_idn = $destination.data('idn');
-                    qoolbar.post(
-                        'sentence',
+                    qoolbar.sentence(
                         {
                             // vrb_txt: verb_name,   No, this may get a different verb by the same name.  Use idn.
                             // NOTE:  This solved a long-fought bug with multiple laugh verbs.
@@ -478,18 +460,10 @@
                             txt: ''
                         },
                         /**
-                         * @param response
-                         * @param response.is_valid -- all good?
-                         * @param response.icon_html -- (if valid) replacement icon diagram html
-                         * @param response.jbo -- (if valid) replacement json for word data-jbo.
-                         * @param response.error_message (if not valid)
+                         * @param new_word
                          */
-                        function qool_verb_drop_done(response) {
-                            if (response.is_valid) {
-                                valid_sentence_response(response, vrb_idn, $destination);
-                            } else {
-                                console.error("qool verb drop", response.error_message);
-                            }
+                        function qool_verb_drop_done(new_word) {
+                            valid_sentence_response(new_word, vrb_idn, $destination);
                         }
                     );
                 }
@@ -582,8 +556,7 @@
                 var $destination = $(this).closest(selector);
                 var obj_idn = $destination.data('idn');
                 // TODO:  Search instead for a class that qoolbar.target() installed?  Better D.R.Y.
-                qoolbar.post(
-                    'sentence',
+                qoolbar.sentence(
                     {
                         vrb_idn: vrb_idn,
                         obj_idn: obj_idn,
@@ -595,14 +568,9 @@
                                   //        So it'd be handy if the input box grew as you typed
                                   //        even multiple lines!
                     },
-                    function bling_score_change_done(response) {
-                        if (response.is_valid) {
-                            valid_sentence_response(response, vrb_idn, $destination);
-                            end_all_editing();
-                            // $qool_icon.replaceWith(response.icon_html);
-                        } else {
-                            console.warn("Error editing num: " + response.error_message);
-                        }
+                    function bling_score_change_done(new_word) {
+                        valid_sentence_response(new_word, vrb_idn, $destination);
+                        end_all_editing();
                     }
                 );
             });
@@ -647,17 +615,12 @@
             $('.qoolbar').toggleClass('qool-more-expand', do_expand);
         }
 
-        function valid_sentence_response(response, vrb_idn, $destination) {
-            if (response.hasOwnProperty('new_words')) {
-                var jbo = $destination.data('jbo');
-                console.assert(typeof jbo === 'object', typeof jbo);
-                var new_words_array = JSON.parse(response.new_words);
-                var jbo_plus_new = jbo.concat(new_words_array);
-                $destination.data('jbo', jbo_plus_new);
-                qoolbar.bling($destination);
-            } else {
-                qoolbar.page_reload();
-            }
+        function valid_sentence_response(new_word, vrb_idn, $destination) {
+            var jbo = $destination.data('jbo');
+            console.assert(typeof jbo === 'object', typeof jbo);
+            jbo.push(new_word);
+            $destination.data('jbo', jbo);   // Necessary?  Or was array modified in place?
+            qoolbar.bling($destination);
         }
         //
         // function json_concat(ja1, ja2) {
@@ -709,16 +672,41 @@
             variables.action = action;
             // variables.csrfmiddlewaretoken = $.cookie('csrftoken');
             // NOTE:  Was this ever good for anything?
+            /**
+             * @param response_object
+             * @param response_object.is_valid -- true or false
+             * @param response_object.error_message -- (if not is_valid)
+             */
             $.post(
                 qoolbar._ajax_url,
                 variables
             ).done(function post_done(response_body) {
                 var response_object = JSON.parse(response_body);
                 response_object.original_json = response_body;
-                callback_done(response_object);
+                if (response_object.is_valid) {
+                    callback_done(response_object);
+                } else {
+                    fail_function(response_object.error_message);
+                }
             }).fail(function post_fail(jqXHR) {
                 fail_function(jqXHR.responseText);
             });
+        };
+
+        qoolbar.sentence = function qoolbar_sentence(sentence_or_null, then_what) {
+            if (sentence_or_null === null) {
+                then_what(null);
+            } else {
+                qoolbar.post('sentence', sentence_or_null, function (response) {
+                    var new_words = JSON.parse(response.new_words);
+                    if (new_words.length === 1) {
+                        var new_word = new_words[0];
+                        then_what(new_word);
+                    } else {
+                        console.error("not 1 new word", sentence_or_null.toString(), response.toString());
+                    }
+                });
+            }
         };
 
         /**
