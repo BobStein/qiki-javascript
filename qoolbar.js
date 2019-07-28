@@ -693,12 +693,28 @@
             });
         };
 
+
+        /**
+         * Create a new word in the lex.
+         *
+         * The null contingency helps the caller when they have follow-up to do whether or not
+         * they need to create a sentence.  then_what() callback is called in either case.
+         *
+         * @param sentence_or_null - object with vrb_idn and other stuff, or null to ignore
+         * @param then_what - callback async follow-up function, with the new word including its idn
+         *                    or null if the input sentence was null.
+         */
         qoolbar.sentence = function qoolbar_sentence(sentence_or_null, then_what) {
             if (sentence_or_null === null) {
                 then_what(null);
             } else {
+                /**
+                 * @param response_object
+                 * @param response_object.new_words[]
+                 */
                 qoolbar.post('sentence', sentence_or_null, function (response) {
-                    var new_words = JSON.parse(response.new_words);
+                    // var new_words = JSON.parse(response.new_words);
+                    var new_words = response.new_words;
                     if (new_words.length === 1) {
                         var new_word = new_words[0];
                         then_what(new_word);
