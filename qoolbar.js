@@ -636,6 +636,56 @@
         };
 
         /**
+         * Create a new word in the lex.
+         *
+         * The null contingency helps the caller when they have follow-up to do whether or not
+         * they need to create a sentence.  then_what() callback is called in either case.
+         *
+         * @param sentence_or_null - object with vrb_idn and other stuff, or null to ignore
+         * @param done_callback - callback async follow-up function, with the new word including its idn
+         *                    or null if the input sentence was null.
+         * @param fail_callback {function=}
+         */
+        qoolbar.sentence = function qoolbar_sentence(sentence_or_null, done_callback, fail_callback) {
+
+            function fail_sentence(error_message) {
+                if (typeof fail_callback === 'function') {
+                    fail_callback(error_message);
+                }
+            }
+
+            if (sentence_or_null === null) {
+                done_callback(null);
+            } else {
+                /**
+                 * @param response_object
+                 * @param response_object.new_words[]
+                 */
+                qoolbar.post(
+                    'sentence',
+                    sentence_or_null,
+                    function (response) {
+                        // var new_words = JSON.parse(response.new_words);
+                        var new_words = response.new_words;
+                        if (typeof new_words === 'object' && new_words.length === 1) {
+                            var new_word = new_words[0];
+                            done_callback(new_word);
+                        } else {
+                            var not_1_word =
+                                "qoolbar sentence " +
+                                sentence_or_null.toString() +
+                                " expects 1 word, not " +
+                                JSON.stringify(response);
+                            console.error(not_1_word);
+                            fail_sentence(not_1_word);
+                        }
+                    },
+                    fail_sentence
+                );
+            }
+        };
+
+        /**
          *
          * action           variables                response fields (when response.is_valid is true)
          * ------           ---------
@@ -654,21 +704,29 @@
          *
          * @param {string} action      \ see table
          * @param {object} variables   / above
-         * @param {function} callback_done(response)
+         * @param {function} done_callback(response)
          *                   response.is_valid {boolean}
          *                   response.error_message (when is_valid is false)
          *                   response.<other_stuff> (when is_valid is true)
-         * @param {function=} callback_fail (optional)
+         * @param {function=} fail_callback (optional)
          */
-        qoolbar.post = function qoolbar_post(action, variables, callback_done, callback_fail) {
-            var fail_function;
-            if (typeof callback_fail === 'undefined') {
-                fail_function = function (error_message) {
-                    console.error("qoolbar post", action, error_message);
-                };
-            } else {
-                fail_function = callback_fail;
+        qoolbar.post = function qoolbar_post(action, variables, done_callback, fail_callback) {
+
+            function fail_post(error_message) {
+                if (typeof fail_callback === 'function') {
+                    fail_callback(error_message);
+                }
             }
+
+            // var fail_function;
+            // if (typeof callback_fail === 'undefined') {
+            //     fail_function = function (error_message) {
+            //         console.error("qoolbar post", action, error_message);
+            //     };
+            // } else {
+            //     fail_function = callback_fail;
+            // }
+
             variables.action = action;
             // variables.csrfmiddlewaretoken = $.cookie('csrftoken');
             // NOTE:  Was this ever good for anything?
@@ -680,49 +738,29 @@
             $.post(
                 qoolbar._ajax_url,
                 variables
-            ).done(function post_done(response_body) {
+            ).done(function (response_body) {
                 var response_object = JSON.parse(response_body);
                 response_object.original_json = response_body;
                 if (response_object.is_valid) {
-                    callback_done(response_object);
+                    done_callback(response_object);
                 } else {
-                    fail_function(response_object.error_message);
+                    var post_invalid =
+                        "qoolbar post " +
+                        action +
+                        " invalid: " +
+                        response_object.error_message;
+                    console.error(post_invalid);
+                    fail_post(post_invalid);
                 }
-            }).fail(function post_fail(jqXHR) {
-                fail_function(jqXHR.responseText);
+            }).fail(function (jqXHR) {
+                var post_failed =
+                    "qoolbar post " +
+                    action +
+                    " failed: " +
+                    jqXHR.responseText;
+                console.error(post_failed);
+                fail_post(post_failed);
             });
-        };
-
-
-        /**
-         * Create a new word in the lex.
-         *
-         * The null contingency helps the caller when they have follow-up to do whether or not
-         * they need to create a sentence.  then_what() callback is called in either case.
-         *
-         * @param sentence_or_null - object with vrb_idn and other stuff, or null to ignore
-         * @param then_what - callback async follow-up function, with the new word including its idn
-         *                    or null if the input sentence was null.
-         */
-        qoolbar.sentence = function qoolbar_sentence(sentence_or_null, then_what) {
-            if (sentence_or_null === null) {
-                then_what(null);
-            } else {
-                /**
-                 * @param response_object
-                 * @param response_object.new_words[]
-                 */
-                qoolbar.post('sentence', sentence_or_null, function (response) {
-                    // var new_words = JSON.parse(response.new_words);
-                    var new_words = response.new_words;
-                    if (new_words.length === 1) {
-                        var new_word = new_words[0];
-                        then_what(new_word);
-                    } else {
-                        console.error("not 1 new word", sentence_or_null.toString(), response.toString());
-                    }
-                });
-            }
         };
 
         /**
