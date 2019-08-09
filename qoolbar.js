@@ -641,10 +641,18 @@
          * The null contingency helps the caller when they have follow-up to do whether or not
          * they need to create a sentence.  then_what() callback is called in either case.
          *
-         * @param sentence_or_null - object with vrb_idn and other stuff, or null to ignore
+         * @param sentence_or_null - object, verb, etc., or null to ignore
+         *        (sbj will be the current user)
+         *        vrb_idn or vrb_txt - required
+         *        obj_idn - required
+         *        txt - required
+         *        num or num_add - optional (defaults to 1)
+         *        use_already - optional (defaults to false)
          * @param done_callback - callback async follow-up function, with the new word including its idn
-         *                    or null if the input sentence was null.
-         * @param fail_callback {function=}
+         *                        or null if the input sentence was null.
+         * @param fail_callback {function=} - optional handler of various failure conditions
+         *                                    error_message is passed, but it will have already been
+         *                                    displayed with console.error()
          */
         qoolbar.sentence = function qoolbar_sentence(sentence_or_null, done_callback, fail_callback) {
 
@@ -735,6 +743,9 @@
              * @param response_object.is_valid -- true or false
              * @param response_object.error_message -- (if not is_valid)
              */
+            if (qoolbar._ajax_url === null) {
+                console.warn("Missing qoolbar.ajax_url()?");
+            }
             $.post(
                 qoolbar._ajax_url,
                 variables
