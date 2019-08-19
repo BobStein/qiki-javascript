@@ -440,7 +440,11 @@
                     $objects.length + " are missing one."
                 );
             }
-            //noinspection JSUnusedGlobalSymbols
+
+            // TODO:  Drag without jQueryUI, https://stackoverflow.com/q/9435051/673991
+            //                               https://stackoverflow.com/q/8569095/673991
+
+            //noinspection JSUnusedGlobalSymbols,JSUnresolvedFunction
             $objects.droppable({
                 accept: ".qool-verb",
                 hoverClass: 'drop-hover',
@@ -713,10 +717,10 @@
          * @param {string} action      \ see table
          * @param {object} variables   / above
          * @param {function} done_callback(response)
-         *                   response.is_valid {boolean}
-         *                   response.error_message (when is_valid is false)
-         *                   response.<other_stuff> (when is_valid is true)
-         * @param {function=} fail_callback (optional)
+         *                   response.is_valid {boolean} will be true
+         *                   response.<other_stuff> - depending on the action
+         * @param {function=} fail_callback(error_message) (optional)
+         *                    error_message will have already been passed to console.error()
          */
         qoolbar.post = function qoolbar_post(action, variables, done_callback, fail_callback) {
 
