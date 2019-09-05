@@ -1,6 +1,12 @@
 // qoolbar.js - a menu of qiki verb icons to apply to things on a web page.
 'use strict';
 
+/**
+ * @param window
+ * @param qoolbar
+ * @param $
+ * @param $.ui
+ */
 (function (window, qoolbar, $) {
     if (typeof qoolbar !== 'object') {
         console.error("The qoolbar.js module doesn't appear to be included.");
@@ -177,7 +183,7 @@
                                 //        E.g. if a user deletes the delete verb (red x),
                                 //        Should his up-to-then deleted objects remain deleted forever?
                                 //        Or should his notion of deletion itself be deleted,
-                                //        thereby mass-undeleting??  Prolly not that...
+                                //        thereby mass-un-deleting??  Probably not that...
 
                                 // TODO:  If "deleted" is unchecked, I need to hide both
                                 //        - what the viewer has deleted
@@ -785,7 +791,6 @@
          * @param verb.name -- e.g. 'like'
          * @param verb.icon_url -- from the latest iconify sentence, or null if there isn't any
          * @return {jQuery}
-         * @private
          */
         function verb_icon(verb) {
             var $verb_icon;
