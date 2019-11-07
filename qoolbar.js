@@ -664,13 +664,13 @@
          *                                    error_message is passed, but it will have already been
          *                                    displayed with console.error()
          */
-        qoolbar.sentence = function qoolbar_sentence(sentence_or_null, done_callback, fail_callback) {
-
-            function fail_sentence(error_message) {
-                if (typeof fail_callback === 'function') {
-                    fail_callback(error_message);
-                }
-            }
+        qoolbar.sentence = function qoolbar_sentence(
+            sentence_or_null,
+            done_callback,
+            fail_callback
+        ) {
+            done_callback = done_callback || function () {};
+            fail_callback = fail_callback || function () {};
 
             if (sentence_or_null === null) {
                 done_callback(null);
@@ -695,10 +695,10 @@
                                 " expects 1 word, not " +
                                 JSON.stringify(response);
                             console.error(not_1_word);
-                            fail_sentence(not_1_word);
+                            fail_callback(not_1_word);
                         }
                     },
-                    fail_sentence
+                    fail_callback
                 );
             }
         };
@@ -729,33 +729,20 @@
          *                    error_message will have already been passed to console.error()
          */
         qoolbar.post = function qoolbar_post(action, variables, done_callback, fail_callback) {
-
-            function fail_post(error_message) {
-                if (typeof fail_callback === 'function') {
-                    fail_callback(error_message);
-                }
-            }
-
-            // var fail_function;
-            // if (typeof callback_fail === 'undefined') {
-            //     fail_function = function (error_message) {
-            //         console.error("qoolbar post", action, error_message);
-            //     };
-            // } else {
-            //     fail_function = callback_fail;
-            // }
+            done_callback = done_callback || function () {};
+            fail_callback = fail_callback || function () {};
 
             variables.action = action;
-            // variables.csrfmiddlewaretoken = $.cookie('csrftoken');
             // NOTE:  Was this ever good for anything?
+            //        variables.csrfmiddlewaretoken = $.cookie('csrftoken');
+            if (typeof qoolbar._ajax_url !== 'string') {
+                console.warn("Missing qoolbar.ajax_url()?");
+            }
             /**
              * @param response_object
              * @param response_object.is_valid -- true or false
              * @param response_object.error_message -- (if not is_valid)
              */
-            if (qoolbar._ajax_url === null) {
-                console.warn("Missing qoolbar.ajax_url()?");
-            }
             $.post(
                 qoolbar._ajax_url,
                 variables
@@ -771,7 +758,7 @@
                         " invalid: " +
                         response_object.error_message;
                     console.error(post_invalid);
-                    fail_post(post_invalid);
+                    fail_callback(post_invalid);
                 }
             }).fail(function (jqXHR) {
                 var post_failed =
@@ -780,7 +767,7 @@
                     " failed: " +
                     jqXHR.responseText;
                 console.error(post_failed);
-                fail_post(post_failed);
+                fail_callback(post_failed);
             });
         };
 
