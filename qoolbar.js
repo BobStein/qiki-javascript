@@ -33,7 +33,7 @@
         TETRAGRAM_FOR_CENTRE: '\ud834\udf06'   // 4 horiz bars --'\u{1d306}' is not supported by IE11
     };
 
-    $(window.document).ready(function () {
+    $(function document_ready() {
 
         /**
          * Build the qoolbar DOM, given an array of verb names and icons.
@@ -249,7 +249,7 @@
         /**
          * Get the list of qool verbs from the lex.  Build the qoolbar and stick them in there.
          *
-         * Should be called from application inside $(document).ready(function() { ... });
+         * Should be called from application inside $(function document_ready() { ... });
          *
          * @param selector - empty div wherein to place it.
          * @param built_callback -  _verb_dicts are ready.  Time to qoolbar.bling the qool targets.
