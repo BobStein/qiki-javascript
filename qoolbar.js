@@ -30,7 +30,7 @@
         VERTICAL_ELLIPSIS:    '\u22EE',   // 3 vertical dots, aka &vellip; &#x022ee; &#8942;
         EQUIVALENT:           '\u2261',   // 3 horizontal bars, aka &equiv; &#x02261; &#8801;
         TRIGRAM_FOR_HEAVEN:   '\u2630',  /// 3 horizontal bars
-        TETRAGRAM_FOR_CENTRE: '\ud834\udf06'   // 4 horiz bars --'\u{1d306}' is not supported by IE11
+        TETRAGRAM_FOR_CENTRE: '\ud834\udf06'   // 4 horiz bars -- '\u{1d306}' is not supported by IE11
     };
 
     $(function document_ready() {
