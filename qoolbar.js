@@ -552,6 +552,7 @@
 
             //noinspection JSJQueryEfficiency
             $('body').on('keydown', '.qool-icon-entry', 'return', function bling_score_return(event) {
+                // TODO:  Use evt.key == 'Enter' instead of jquery.hotkeys.js, https://stackoverflow.com/a/3369624/673991
                 event.preventDefault();
                 var new_num = $(this).val().trim();
                 if (new_num === '') {
@@ -587,6 +588,7 @@
 
             //noinspection JSJQueryEfficiency
             $('body').on('keydown', '.qool-icon-entry', 'esc', function bling_score_esc(event) {
+                // TODO:  Use evt.key == 'Escape' instead of jquery.hotkeys.js, https://stackoverflow.com/a/3369624/673991
                 event.preventDefault();
                 end_all_editing();
             });
@@ -606,6 +608,7 @@
             qool_more_toggle(false);
         });
         $(window.document).on('keypress', '#qool-new-verb', function new_verb_keypress(event) {
+            // TODO:  Use evt.key == 'Enter' instead of jquery.hotkeys.js, https://stackoverflow.com/a/3369624/673991
             if (event.keyCode === 13) {
                 var verb_name = $(this).val();
                 $(this).val("");
