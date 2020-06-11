@@ -661,12 +661,13 @@
          *        txt - required
          *        num or num_add - optional (defaults to 1)
          *        use_already - optional (defaults to false)
-         * @param done_callback - callback async follow-up function, with the new word including its idn
-         *                        or null if the input sentence was null.
+         * @param done_callback - callback async follow-up function, with the new word including
+         *                        its idn, or null if the input sentence was null.
          * @param fail_callback {function=} - optional handler of various failure conditions
          *                                    error_message is passed, but it will have already been
          *                                    displayed with console.error()
          */
+        // TODO:  Still need the null option?  Caller post_it_done_2() used to need it, doesn't now.
         qoolbar.sentence = function qoolbar_sentence(
             sentence_or_null,
             done_callback,
@@ -708,20 +709,21 @@
 
         /**
          *
-         * action           variables                response fields (when response.is_valid is true)
+         * action           variables                  response (when response.is_valid is true)
          * ------           ---------
-         * 'qoolbar_list'   (none)
-         * 'new_verb'       name: string
-         * 'delete_verb'    idn: q-string
-         * 'answer'         question: string
+         * 'qoolbar_list'                              verbs: [{idn: ...}, {idn: ...}, ...]
+         * 'new_verb'       name: string               idn: (qstring)
+         * 'delete_verb'    idn: q-string              idn: (qstring)
+         * 'answer'         question: string           message: "Question (path) answer (text)"
          *                  answer: string
-         * 'sentence'       vrb_idn: q-string   \ pick one
-         *                  vrb_txt: string     /
+         * 'sentence'       vrb_idn: q-string \ pick   new_words: [{idn: ...}]
+         *                  vrb_txt: string   / one
          *                  obj_idn: q-string
          *                  num: number       \ pick one
          *                  num_add: number   / (default 1)
          *                  txt: string (default "")
-         *                  use_already: bool (default false)   Use an old sentence if same s,v,o,t,n.
+         *                  use_already: bool (default false)
+         *                  - meaning use an old sentence if there is one with the same s,v,o,t,n.
          *
          * @param {string} action      \ see table
          * @param {object} variables   / above
