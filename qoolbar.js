@@ -674,7 +674,7 @@
             fail_callback
         ) {
             done_callback = done_callback || function () {};
-            fail_callback = fail_callback || function () {};
+            fail_callback = fail_callback || function (m) { console.error(m); };
 
             if (sentence_or_null === null) {
                 done_callback(null);
@@ -698,7 +698,6 @@
                                 sentence_or_null.toString() +
                                 " expects 1 word, not " +
                                 JSON.stringify(response);
-                            console.error(not_1_word);
                             fail_callback(not_1_word);
                         }
                     },
@@ -735,7 +734,7 @@
          */
         qoolbar.post = function qoolbar_post(action, variables, done_callback, fail_callback) {
             done_callback = done_callback || function () {};
-            fail_callback = fail_callback || function () {};
+            fail_callback = fail_callback || function (m) { console.error(m); };
 
             variables.action = action;
             // NOTE:  Was this ever good for anything?
@@ -762,7 +761,6 @@
                         action +
                         " invalid: " +
                         response_object.error_message;
-                    console.error(post_invalid);
                     fail_callback(post_invalid);
                 }
             }).fail(function (jqXHR) {
@@ -771,7 +769,6 @@
                     action +
                     " failed: " +
                     jqXHR.responseText;
-                console.error(post_failed);
                 fail_callback(post_failed);
             });
         };
