@@ -52,6 +52,12 @@
         function qoolbar_build(verbs) {
             qoolbar._verb_dicts = {};
             var $qoolbar = $('<div>', {'class': 'qoolbar fade_until_hover'});
+            // THANKS:  class is a reserved word,
+            //          https://api.jquery.com/jQuery/#creating-new-elements
+            //          'The name "class" must be quoted in the object since it is a JavaScript
+            //          reserved word, and "className" cannot be used since it refers to the
+            //          DOM property, not the attribute.'
+
             var $qoolbar_head = $('<div>', {
                 'class': 'qoolbar-head qool-more-expanse',
                 'title': "This is your qoolbar. Drag these verbs onto the page."
@@ -88,8 +94,8 @@
                     'title': "more options"
                 // }).text(UNICODE.VERTICAL_ELLIPSIS)
                 })
-                    .append($('<span>', {'class': 'qool-more-contract'}).text(UNICODE.VERTICAL_ELLIPSIS))
-                    .append($('<span>', {'class': 'qool-more-expanse'}).text(UNICODE.TRIGRAM_FOR_HEAVEN))
+                .append($('<span>', {'class': 'qool-more-contract'}).text(UNICODE.VERTICAL_ELLIPSIS))
+                .append($('<span>', {'class': 'qool-more-expanse'}).text(UNICODE.TRIGRAM_FOR_HEAVEN))
             );
             $qoolbar_body.append(
                 $('<div>', {
