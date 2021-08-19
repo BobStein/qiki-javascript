@@ -161,7 +161,9 @@
                         if (qoolbar._verb_dicts.hasOwnProperty(vrb)) {
                             var verb_dict = qoolbar._verb_dicts[vrb];
                             // console.log("bling", vrb, verb_dict);
-                            // EXAMPLE:  0q82_86 {idn: "0q82_86", icon_url: "http://tool.qiki.info/icon/thumbsup_16.png", name: "like"}
+                            // EXAMPLE:  0q82_86 {idn: "0q82_86",
+                            //           icon_url: "http://tool.qiki.info/icon/thumbsup_16.png",
+                            //           name: "like"}
                             var $verb_icon = verb_icon(verb_dict);
                             safe_set_attr(
                                 $verb_icon,
