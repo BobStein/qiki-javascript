@@ -673,8 +673,10 @@
          * @param done_callback - callback async follow-up function, with the new word including
          *                        its idn, or null if the input sentence was null.
          * @param fail_callback {function=} - optional handler of various failure conditions
-         *                                    error_message is passed, but it will have already been
-         *                                    displayed with console.error()
+         *                                    If specified, error_message is passed.
+         *                                                  It will NOT have been displayed.
+         *                                    If unspecified, error_message WILL be displayed
+         *                                                    with console.error().
          */
         // TODO:  Still need the null option?  Caller post_it_done_2() used to need it, doesn't now.
         qoolbar.sentence = function qoolbar_sentence(
