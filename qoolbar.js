@@ -657,65 +657,68 @@
             // TODO:  Reload Chrome, https://stackoverflow.com/q/10719505/673991
         };
 
-        /**
-         * Create a new word in the lex.
-         *
-         * The null contingency helps the caller when they have follow-up to do whether or not
-         * they need to create a sentence.  then_what() callback is called in either case.
-         *
-         * @param sentence_or_null - object, verb, etc., or null to ignore
-         *        (sbj will be the current user)
-         *        vrb_idn or vrb_txt - required
-         *        obj_idn - required
-         *        txt - required
-         *        num or num_add - optional (defaults to 1)
-         *        use_already - optional (defaults to false)
-         * @param done_callback - callback async follow-up function, with the new word including
-         *                        its idn, or null if the input sentence was null.
-         * @param fail_callback {function=} - optional handler of various failure conditions
-         *                                    If specified, error_message is passed.
-         *                                                  It will NOT have been displayed.
-         *                                    If unspecified, error_message WILL be displayed
-         *                                                    with console.error().
-         */
-        // TODO:  Still need the null option?  Caller post_it_done_2() used to need it, doesn't now.
-        qoolbar.sentence = function qoolbar_sentence(
-            sentence_or_null,
-            done_callback,
-            fail_callback
-        ) {
-            done_callback = done_callback || function () {};
-            fail_callback = fail_callback || function (m) { console.error(m); };
+        // FIXME:  Implement qoolbar.create_word() where qoolbar.sentence() is now called.
+        //         Steal it from unslumping.js
 
-            if (sentence_or_null === null) {
-                done_callback(null);
-            } else {
-                /**
-                 * @param response_object
-                 * @param response_object.new_words[]
-                 */
-                qoolbar.post(
-                    'sentence',
-                    sentence_or_null,
-                    function (response) {
-                        // var new_words = JSON.parse(response.new_words);
-                        var new_words = response.new_words;
-                        if (typeof new_words === 'object' && new_words.length === 1) {
-                            var new_word = new_words[0];
-                            done_callback(new_word);
-                        } else {
-                            var not_1_word =
-                                "qoolbar sentence " +
-                                sentence_or_null.toString() +
-                                " expects 1 word, not " +
-                                JSON.stringify(response);
-                            fail_callback(not_1_word);
-                        }
-                    },
-                    fail_callback
-                );
-            }
-        };
+        // /**
+        //  * Create a new word in the lex.
+        //  *
+        //  * The null contingency helps the caller when they have follow-up to do whether or not
+        //  * they need to create a sentence.  then_what() callback is called in either case.
+        //  *
+        //  * @param sentence_or_null - object, verb, etc., or null to ignore
+        //  *        (sbj will be the current user)
+        //  *        vrb_idn or vrb_txt - required
+        //  *        obj_idn - required
+        //  *        txt - required
+        //  *        num or num_add - optional (defaults to 1)
+        //  *        use_already - optional (defaults to false)
+        //  * @param done_callback - callback async follow-up function, with the new word including
+        //  *                        its idn, or null if the input sentence was null.
+        //  * @param fail_callback {function=} - optional handler of various failure conditions
+        //  *                                    If specified, error_message is passed.
+        //  *                                                  It will NOT have been displayed.
+        //  *                                    If unspecified, error_message WILL be displayed
+        //  *                                                    with console.error().
+        //  */
+        // // TODO:  Still need the null option?  Caller post_it_done_2() used to need it, doesn't now.
+        // qoolbar.sentence = function qoolbar_sentence(
+        //     sentence_or_null,
+        //     done_callback,
+        //     fail_callback
+        // ) {
+        //     done_callback = done_callback || function () {};
+        //     fail_callback = fail_callback || function (m) { console.error(m); };
+        //
+        //     if (sentence_or_null === null) {
+        //         done_callback(null);
+        //     } else {
+        //         /**
+        //          * @param response_object
+        //          * @param response_object.new_words[]
+        //          */
+        //         qoolbar.post(
+        //             'sentence',
+        //             sentence_or_null,
+        //             function (response) {
+        //                 // var new_words = JSON.parse(response.new_words);
+        //                 var new_words = response.new_words;
+        //                 if (typeof new_words === 'object' && new_words.length === 1) {
+        //                     var new_word = new_words[0];
+        //                     done_callback(new_word);
+        //                 } else {
+        //                     var not_1_word =
+        //                         "qoolbar sentence " +
+        //                         sentence_or_null.toString() +
+        //                         " expects 1 word, not " +
+        //                         JSON.stringify(response);
+        //                     fail_callback(not_1_word);
+        //                 }
+        //             },
+        //             fail_callback
+        //         );
+        //     }
+        // };
 
         /**
          *
@@ -726,14 +729,14 @@
          * 'delete_verb'    idn: q-string              idn: (qstring)
          * 'answer'         question: string           message: "Question (path) answer (text)"
          *                  answer: string
-         * 'sentence'       vrb_idn: q-string \ pick   new_words: [{idn: ...}]
-         *                  vrb_txt: string   / one
-         *                  obj_idn: q-string
-         *                  num: number       \ pick one
-         *                  num_add: number   / (default 1)
-         *                  txt: string (default "")
-         *                  use_already: bool (default false)
-         *                  - meaning use an old sentence if there is one with the same s,v,o,t,n.
+        ***'sentence'       vrb_idn: q-string \ pick   new_words: [{idn: ...}]
+        ***                 vrb_txt: string   / one
+        ***                 obj_idn: q-string
+        ***                 num: number       \ pick one
+        ***                 num_add: number   / (default 1)
+        ***                 txt: string (default "")
+        ***                 use_already: bool (default false)
+        ***                 - meaning use an old sentence if there is one with the same s,v,o,t,n.
          *
          * @param {string} action      \ see table
          * @param {object} variables   / above
