@@ -14,7 +14,7 @@
    if (typeof $ !== 'function') {
         console.error("The qoolbar.js module requires jQuery.");
     } else if (typeof $.ui === 'undefined') {
-        console.error("The qoolbar.js module requires jQuery UI.");
+        console.warn("The qoolbar.js module wants to use jQuery UI.");
         // TODO:  Why?  List uses here.  Then get rid of them.
     }
     qoolbar.is_ready = false;
